@@ -8,6 +8,7 @@ export interface QueryRequest {
   enable_crag_grading?: boolean;
   enable_self_rag_critique?: boolean;
   enable_static_sql_validation?: boolean;
+  stream?: boolean;
 }
 
 export interface TraceEvent {
@@ -32,6 +33,16 @@ export interface QueryResponse {
   sub_results: SubQuestionResult[];
   trace: TraceEvent[];
 }
+
+// One line of the "stream": true NDJSON response body (POST /query).
+// Discriminated by `type` - trace lines arrive as each graph node
+// finishes, sub_result lines as each sub-question resolves, and a single
+// final line closes out the stream with the same shape POST /query
+// (stream: false) returns in one shot.
+export type StreamLine =
+  | ({ type: "trace" } & TraceEvent)
+  | { type: "sub_result"; result: SubQuestionResult }
+  | { type: "final"; question: string; final_answer: string | null; sub_results: SubQuestionResult[] };
 
 export interface HealthResponse {
   status: string;

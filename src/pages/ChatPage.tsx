@@ -1,17 +1,18 @@
+import { useState } from "react";
 import { useAppSelector } from "../store/hooks";
-import { useRunQueryMutation } from "../api/apiSlice";
+import { useStreamingQuery } from "../hooks/useStreamingQuery";
 import { QueryForm } from "../components/QueryForm";
 import { TraceView } from "../components/TraceView";
 import { AnswerView } from "../components/AnswerView";
-import { useTraceReveal } from "../hooks/useTraceReveal";
 
 export function ChatPage() {
-  const [runQuery, { data, error, isLoading }] = useRunQueryMutation();
   const settings = useAppSelector((state) => state.settings);
-  const { visibleEvents, isStreaming } = useTraceReveal(data?.trace ?? []);
+  const { trace, subResults, finalAnswer, isStreaming, error, run } = useStreamingQuery();
+  const [askedQuestion, setAskedQuestion] = useState<string | null>(null);
 
   const handleSubmit = (question: string) => {
-    runQuery({
+    setAskedQuestion(question);
+    run({
       question,
       enable_decomposition: settings.enableDecomposition,
       enable_crag_grading: settings.enableCragGrading,
@@ -19,43 +20,66 @@ export function ChatPage() {
     });
   };
 
-  const hasResult = Boolean(data);
+  const hasStarted = askedQuestion !== null;
+  const isDone = hasStarted && !isStreaming && !error;
 
   return (
     <div className="chat-page">
-      {!hasResult && !isLoading && (
-        <div className="chat-hero">
-          <span className="chat-hero-eyebrow">Text-to-SQL agent</span>
-          <h1>Ask your database anything</h1>
-          <p>
-            Natural-language questions, decomposed and answered over your live schema —
-            with every reasoning step traced.
-          </p>
-        </div>
-      )}
+      <div className="chat-scroll">
+        {!hasStarted && (
+          <div className="chat-hero">
+            <span className="chat-hero-eyebrow">Text-to-SQL agent</span>
+            <h1>Ask your database anything</h1>
+            <p>
+              Natural-language questions, decomposed and answered over your live schema —
+              with every reasoning step traced.
+            </p>
+          </div>
+        )}
 
-      <QueryForm onSubmit={handleSubmit} pending={isLoading} />
+        {hasStarted && (
+          <div className="chat-user-message">
+            <span className="chat-user-label">You asked</span>
+            <p>{askedQuestion}</p>
+          </div>
+        )}
 
-      {error && (
-        <div className="error-banner">
-          <strong>Request failed</strong>
-          <span>{"status" in error ? `Status ${error.status}` : "Please try again."}</span>
-        </div>
-      )}
+        {error && (
+          <div className="error-banner">
+            <strong>Request failed</strong>
+            <span>{error}</span>
+          </div>
+        )}
 
-      {isLoading && !data && (
-        <div className="loading-banner">
-          <span className="dot-pulse" />
-          Running agent graph...
-        </div>
-      )}
+        {isStreaming && trace.length === 0 && (
+          <div className="loading-banner">
+            <span className="dot-pulse" />
+            Running agent graph...
+          </div>
+        )}
 
-      {data && (
-        <div className="results">
-          <TraceView events={visibleEvents} isStreaming={isStreaming} />
-          {!isStreaming && <AnswerView result={data} />}
+        {trace.length > 0 && (
+          <div className="results">
+            <TraceView events={trace} isStreaming={isStreaming} />
+            {isDone && (
+              <AnswerView
+                result={{
+                  question: askedQuestion ?? "",
+                  final_answer: finalAnswer,
+                  sub_results: subResults,
+                  trace,
+                }}
+              />
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="chat-composer-dock">
+        <div className="chat-composer-dock-inner">
+          <QueryForm onSubmit={handleSubmit} pending={isStreaming} />
         </div>
-      )}
+      </div>
     </div>
   );
 }
