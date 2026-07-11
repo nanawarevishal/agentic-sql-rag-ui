@@ -88,10 +88,11 @@ function Module({
   );
 }
 
-// How close to the bottom of the page (in px) counts as "still following
-// along" - auto-scroll only kicks in then, so it never yanks the view back
-// down if someone scrolled up mid-stream to reread an earlier step.
-const STICK_TO_BOTTOM_THRESHOLD = 220;
+// Clearance (in px) reserved above/below the active step so it doesn't land
+// under the sticky header or the fixed composer dock - must match the
+// scroll-margin-top/bottom set on .trace-step-row in App.css.
+const HEADER_CLEARANCE = 90;
+const DOCK_CLEARANCE = 200;
 
 export function TraceView({ events, isStreaming }: Props) {
   const activeStepRef = useRef<HTMLLIElement | null>(null);
@@ -103,10 +104,15 @@ export function TraceView({ events, isStreaming }: Props) {
 
   useEffect(() => {
     if (!isStreaming || !activeStepRef.current) return;
-    const nearBottom =
-      document.documentElement.scrollHeight <= window.innerHeight ||
-      window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - STICK_TO_BOTTOM_THRESHOLD;
-    if (nearBottom) {
+    // Check the active step's own visibility rather than distance from the
+    // page bottom - a burst of several trace lines arriving at once (e.g.
+    // parallel sub-questions) can grow the page by more than any fixed
+    // threshold in one jump, which would permanently wedge a "keep up with
+    // the bottom" check. Re-deriving visibility fresh each time always
+    // self-corrects instead.
+    const rect = activeStepRef.current.getBoundingClientRect();
+    const isVisible = rect.top >= HEADER_CLEARANCE && rect.bottom <= window.innerHeight - DOCK_CLEARANCE;
+    if (!isVisible) {
       activeStepRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
   }, [activeStep, isStreaming]);

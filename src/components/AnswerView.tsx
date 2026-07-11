@@ -18,7 +18,7 @@ export function AnswerView({ result }: Props) {
       <p className="final-answer">{result.final_answer ?? "No answer produced."}</p>
 
       {result.sub_results.length > 0 && (
-        <details className="sub-results" open>
+        <details className="sub-results">
           <summary>{result.sub_results.length} sub-question result(s)</summary>
           <div className="sub-results-list">
             {result.sub_results.map((sub, i) => (
