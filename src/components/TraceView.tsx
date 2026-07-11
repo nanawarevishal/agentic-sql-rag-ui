@@ -33,26 +33,34 @@ export function TraceView({ trace }: Props) {
 
   if (trace.length === 0) return null;
 
+  const isStreaming = visibleCount < trace.length;
+
   return (
-    <ol className="trace-view">
-      {trace.slice(0, visibleCount).map((event) => (
-        <li key={`${event.sub_question ?? "main"}-${event.step}`} className="trace-event">
-          <div className="trace-event-header">
-            <span className="trace-step">#{event.step}</span>
-            <span className="trace-node">{event.node}</span>
-            {event.sub_question && (
-              <span className="trace-subq">{event.sub_question}</span>
-            )}
-          </div>
-          <p className="trace-summary">{event.summary}</p>
-          {Object.keys(event.detail).length > 0 && (
-            <details>
-              <summary>detail</summary>
-              <pre>{JSON.stringify(event.detail, null, 2)}</pre>
-            </details>
-          )}
-        </li>
-      ))}
-    </ol>
+    <div className="trace-panel">
+      <div className="trace-panel-header">
+        <span>Agent trace</span>
+        {isStreaming && <span className="dot-pulse" />}
+      </div>
+      <ol className="trace-view">
+        {trace.slice(0, visibleCount).map((event) => (
+          <li key={`${event.sub_question ?? "main"}-${event.step}`} className="trace-event">
+            <span className="trace-marker">{event.step}</span>
+            <div className="trace-event-body">
+              <div className="trace-event-header">
+                <span className="trace-node">{event.node}</span>
+                {event.sub_question && <span className="trace-subq">{event.sub_question}</span>}
+              </div>
+              <p className="trace-summary">{event.summary}</p>
+              {Object.keys(event.detail).length > 0 && (
+                <details>
+                  <summary>Detail</summary>
+                  <pre>{JSON.stringify(event.detail, null, 2)}</pre>
+                </details>
+              )}
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }

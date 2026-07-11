@@ -26,15 +26,9 @@ export function QueryForm({ onSubmit, pending }: Props) {
         if (question.trim() && !pending) onSubmit(question.trim());
       }}
     >
-      <textarea
-        value={question}
-        onChange={(e) => setQuestion(e.target.value)}
-        placeholder="Ask a question about the database..."
-        rows={3}
-      />
       <div className="query-toggles">
         {TOGGLES.map(({ key, label }) => (
-          <label key={key}>
+          <label key={key} className={`chip-toggle ${settings[key] ? "is-checked" : ""}`}>
             <input
               type="checkbox"
               checked={settings[key]}
@@ -44,9 +38,39 @@ export function QueryForm({ onSubmit, pending }: Props) {
           </label>
         ))}
       </div>
-      <button type="submit" disabled={pending || !question.trim()}>
-        {pending ? "Running..." : "Ask"}
-      </button>
+
+      <div className="query-composer">
+        <textarea
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          placeholder="Ask a question about the database..."
+          rows={3}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+              e.preventDefault();
+              if (question.trim() && !pending) onSubmit(question.trim());
+            }
+          }}
+        />
+        <div className="query-composer-footer">
+          <span className="query-hint">⌘/Ctrl + Enter to submit</span>
+          <button type="submit" className="btn-primary" disabled={pending || !question.trim()}>
+            {pending ? (
+              <>
+                <span className="spinner" />
+                Running
+              </>
+            ) : (
+              <>
+                Ask
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
     </form>
   );
 }

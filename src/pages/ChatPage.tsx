@@ -17,16 +17,35 @@ export function ChatPage() {
     });
   };
 
+  const hasResult = Boolean(data);
+
   return (
     <div className="chat-page">
+      {!hasResult && !isLoading && (
+        <div className="chat-hero">
+          <span className="chat-hero-eyebrow">Text-to-SQL agent</span>
+          <h1>Ask your database anything</h1>
+          <p>
+            Natural-language questions, decomposed and answered over your live schema —
+            with every reasoning step traced.
+          </p>
+        </div>
+      )}
+
       <QueryForm onSubmit={handleSubmit} pending={isLoading} />
 
       {error && (
-        <p className="error-banner">
-          {"status" in error
-            ? `Request failed (${error.status})`
-            : "Request failed"}
-        </p>
+        <div className="error-banner">
+          <strong>Request failed</strong>
+          <span>{"status" in error ? `Status ${error.status}` : "Please try again."}</span>
+        </div>
+      )}
+
+      {isLoading && !data && (
+        <div className="loading-banner">
+          <span className="dot-pulse" />
+          Running agent graph...
+        </div>
       )}
 
       {data && (
