@@ -3,10 +3,12 @@ import { useRunQueryMutation } from "../api/apiSlice";
 import { QueryForm } from "../components/QueryForm";
 import { TraceView } from "../components/TraceView";
 import { AnswerView } from "../components/AnswerView";
+import { useTraceReveal } from "../hooks/useTraceReveal";
 
 export function ChatPage() {
   const [runQuery, { data, error, isLoading }] = useRunQueryMutation();
   const settings = useAppSelector((state) => state.settings);
+  const { visibleEvents, isStreaming } = useTraceReveal(data?.trace ?? []);
 
   const handleSubmit = (question: string) => {
     runQuery({
@@ -50,8 +52,8 @@ export function ChatPage() {
 
       {data && (
         <div className="results">
-          <TraceView trace={data.trace} />
-          <AnswerView result={data} />
+          <TraceView events={visibleEvents} isStreaming={isStreaming} />
+          {!isStreaming && <AnswerView result={data} />}
         </div>
       )}
     </div>
