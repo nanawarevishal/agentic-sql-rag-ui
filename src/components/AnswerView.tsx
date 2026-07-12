@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { QueryResponse } from "../types";
-import { detectVisualization } from "../lib/resultVisualization";
+import { detectVisualization, detectMultiSubResultBar } from "../lib/resultVisualization";
 import { ResultChart } from "./ResultChart";
 import { TrendChart } from "./TrendChart";
 import { StatTile } from "./StatTile";
@@ -86,14 +86,35 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
+// Once the trace collapses and this mounts, nothing else scrolls the page -
+// the last "keep the active trace step visible" auto-scroll (in TraceView)
+// happened before this existed, so the viewport can easily be left sitting
+// wherever that stopped. Bring the freshly-revealed answer (and any chart
+// under it) into view once, the same way the trace already does per-step.
+const HEADER_CLEARANCE = 90;
+const DOCK_CLEARANCE = 200;
+
 export function AnswerView({ result }: Props) {
   const hasAnswer = Boolean(result.final_answer);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const isVisible = rect.top >= HEADER_CLEARANCE && rect.bottom <= window.innerHeight - DOCK_CLEARANCE;
+    if (!isVisible) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, []);
 
   const singleSubResult = result.sub_results.length === 1 ? result.sub_results[0] : null;
   const visualization = singleSubResult ? detectVisualization(singleSubResult.rows) : null;
+  // Decomposition can split one time-series/comparison question into N
+  // single-value sub-questions, each too small to chart alone - recombine
+  // them into a ranked bar rather than losing the visualization entirely.
+  const multiBar = !singleSubResult && result.sub_results.length > 1 ? detectMultiSubResultBar(result.sub_results) : null;
 
   return (
-    <div className={`answer-view ${hasAnswer ? "" : "is-empty"}`}>
+    <div ref={rootRef} className={`answer-view ${hasAnswer ? "" : "is-empty"}`}>
       <div className="answer-header">
         <span className="answer-icon">
           {hasAnswer ? (
@@ -131,6 +152,7 @@ export function AnswerView({ result }: Props) {
           )}
         </>
       )}
+      {multiBar && <ResultChart rows={multiBar.rows} labelKey={multiBar.labelKey} valueKey={multiBar.valueKey} />}
     </div>
   );
 }

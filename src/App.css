@@ -135,7 +135,18 @@
   align-items: flex-start;
 }
 
-.chat-page.has-focus-panel .chat-scroll {
+/* The composer moves into the same flex column as chat-scroll and switches
+   to sticky (from the normal mode's fixed-to-viewport), so it always
+   matches chat-scroll's actual max-width-capped rendered width instead of
+   a hardcoded percentage guessing at it - a percentage can only coincide
+   with a capped sibling's width at one specific viewport size and drifts
+   out of alignment at every other width. Split mode always has at least one
+   full turn already rendered (the panel only opens from a chart inside an
+   answer), so there's no short-content edge case requiring a min-height
+   fallback to keep the composer pinned to the viewport bottom. */
+.chat-page.has-focus-panel .chat-column {
+  display: flex;
+  flex-direction: column;
   flex: 1 1 50%;
   min-width: 0;
   max-width: 640px;
@@ -144,12 +155,19 @@
   padding-right: 1.5rem;
 }
 
+.chat-page.has-focus-panel .chat-scroll {
+  padding-bottom: 0;
+}
+
 .chat-page.has-focus-panel .chat-composer-dock {
-  right: 45%;
+  position: sticky;
+  left: auto;
+  right: auto;
+  bottom: 0;
 }
 
 .chart-focus-panel {
-  flex: 1 1 45%;
+  flex: 1 1 50%;
   min-width: 0;
   position: sticky;
   top: 70px;
@@ -217,14 +235,10 @@
     flex-direction: column;
   }
 
-  .chat-page.has-focus-panel .chat-scroll {
+  .chat-page.has-focus-panel .chat-column {
     max-width: none;
     padding-left: 0;
     padding-right: 0;
-  }
-
-  .chat-page.has-focus-panel .chat-composer-dock {
-    right: 0;
   }
 
   .chart-focus-panel {
@@ -1070,6 +1084,8 @@ pre {
   border-radius: var(--radius-lg);
   padding: 1.25rem 1.4rem 1.4rem;
   animation: answer-in 0.4s ease-out;
+  scroll-margin-top: 90px;
+  scroll-margin-bottom: 200px;
 }
 
 .answer-view.is-empty {

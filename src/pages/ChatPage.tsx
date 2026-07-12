@@ -32,26 +32,28 @@ function ChatPageContent() {
 
   return (
     <div className={`chat-page ${focused ? "has-focus-panel" : ""}`}>
-      <div className="chat-scroll">
-        {turns.length === 0 && (
-          <div className="chat-hero">
-            <span className="chat-hero-eyebrow">Text-to-SQL agent</span>
-            <h1>Ask your database anything</h1>
-            <p>
-              Natural-language questions, decomposed and answered over your live schema —
-              with every reasoning step traced.
-            </p>
+      <div className="chat-column">
+        <div className="chat-scroll">
+          {turns.length === 0 && (
+            <div className="chat-hero">
+              <span className="chat-hero-eyebrow">Text-to-SQL agent</span>
+              <h1>Ask your database anything</h1>
+              <p>
+                Natural-language questions, decomposed and answered over your live schema —
+                with every reasoning step traced.
+              </p>
+            </div>
+          )}
+
+          {turns.map((turn) => (
+            <ChatTurnView key={turn.id} turn={turn} />
+          ))}
+        </div>
+
+        <div className="chat-composer-dock">
+          <div className="chat-composer-dock-inner">
+            <QueryForm onSubmit={handleSubmit} pending={pending} />
           </div>
-        )}
-
-        {turns.map((turn) => (
-          <ChatTurnView key={turn.id} turn={turn} />
-        ))}
-      </div>
-
-      <div className="chat-composer-dock">
-        <div className="chat-composer-dock-inner">
-          <QueryForm onSubmit={handleSubmit} pending={pending} />
         </div>
       </div>
 
