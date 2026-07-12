@@ -24,6 +24,9 @@ export interface SubQuestionResult {
   sub_question?: string;
   sql?: string;
   retries?: number;
+  rows?: Array<Record<string, unknown>>;
+  error?: string | null;
+  accepted?: boolean;
   [key: string]: unknown;
 }
 

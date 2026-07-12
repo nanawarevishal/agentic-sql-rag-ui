@@ -1,13 +1,20 @@
 import { useState } from "react";
 import type { QueryResponse } from "../types";
+import { detectVisualization } from "../lib/resultVisualization";
+import { ResultChart } from "./ResultChart";
+import { TrendChart } from "./TrendChart";
+import { StatTile } from "./StatTile";
 
 interface Props {
   result: QueryResponse;
 }
 
-// The SQL/row-level detail behind each sub-question already lives in the
-// trace panel above (Generate SQL / Execute SQL step details) - this view's
-// only job is the takeaway, so it stays prose-only rather than repeating it.
+// The SQL behind each sub-question already lives in the trace panel above
+// (Generate SQL / Execute SQL step details), so it doesn't repeat here. But
+// for a single-question data-retrieval query, the result *rows* are part of
+// the takeaway, not implementation detail - when they resolve to a clean
+// category+measure shape, they're worth visualizing rather than leaving
+// buried in a collapsed trace step.
 function renderInline(text: string) {
   return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
     part.startsWith("**") && part.endsWith("**") ? <strong key={i}>{part.slice(2, -2)}</strong> : part
@@ -82,6 +89,9 @@ function CopyButton({ text }: { text: string }) {
 export function AnswerView({ result }: Props) {
   const hasAnswer = Boolean(result.final_answer);
 
+  const singleSubResult = result.sub_results.length === 1 ? result.sub_results[0] : null;
+  const visualization = singleSubResult ? detectVisualization(singleSubResult.rows) : null;
+
   return (
     <div className={`answer-view ${hasAnswer ? "" : "is-empty"}`}>
       <div className="answer-header">
@@ -107,6 +117,19 @@ export function AnswerView({ result }: Props) {
           The agent couldn't produce a final answer for this one. Try rephrasing the question, being more
           specific about what you're asking, or splitting it into smaller questions.
         </p>
+      )}
+      {visualization && singleSubResult?.rows && (
+        <>
+          {visualization.type === "stat" && (
+            <StatTile row={singleSubResult.rows[0]} valueKey={visualization.valueKey} labelKey={visualization.labelKey} />
+          )}
+          {visualization.type === "bar" && (
+            <ResultChart rows={singleSubResult.rows} labelKey={visualization.labelKey} valueKey={visualization.valueKey} />
+          )}
+          {visualization.type === "line" && (
+            <TrendChart rows={singleSubResult.rows} dateKey={visualization.dateKey} valueKey={visualization.valueKey} />
+          )}
+        </>
       )}
     </div>
   );

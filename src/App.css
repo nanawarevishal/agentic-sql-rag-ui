@@ -120,6 +120,125 @@
   flex-direction: column;
 }
 
+/* Split layout when a chart is expanded into the side panel: break out of
+   app-main's centered 880px column to use the full viewport width, then
+   lay chat + panel out side by side. The header above stays at its normal
+   centered width - only the content below splits. */
+.chat-page.has-focus-panel {
+  position: relative;
+  left: 50%;
+  right: 50%;
+  width: 100vw;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.chat-page.has-focus-panel .chat-scroll {
+  flex: 1 1 50%;
+  min-width: 0;
+  max-width: 640px;
+  margin: 0 auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+.chat-page.has-focus-panel .chat-composer-dock {
+  right: 45%;
+}
+
+.chart-focus-panel {
+  flex: 1 1 45%;
+  min-width: 0;
+  position: sticky;
+  top: 70px;
+  align-self: flex-start;
+  height: calc(100vh - 70px);
+  overflow-y: auto;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  padding: 1.25rem 1.5rem 2rem;
+}
+
+.chart-focus-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.chart-focus-panel-close {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: var(--surface-hover);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.chart-focus-panel-close:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.chart-focus-panel-body .result-chart {
+  border: none;
+  padding-top: 0;
+}
+
+.chart-focus-panel-body .result-bar-label {
+  overflow: visible;
+  white-space: normal;
+}
+
+.chart-focus-panel-body .result-line-canvas {
+  height: 320px;
+}
+
+@media (max-width: 860px) {
+  .chat-page.has-focus-panel {
+    position: static;
+    left: auto;
+    right: auto;
+    width: auto;
+    margin-left: 0;
+    margin-right: 0;
+    flex-direction: column;
+  }
+
+  .chat-page.has-focus-panel .chat-scroll {
+    max-width: none;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .chat-page.has-focus-panel .chat-composer-dock {
+    right: 0;
+  }
+
+  .chart-focus-panel {
+    position: fixed;
+    inset: 0;
+    top: 0;
+    height: 100%;
+    width: 100%;
+    z-index: 50;
+    border-left: none;
+    padding: 1.5rem;
+  }
+}
+
 .chat-scroll {
   padding-bottom: 12rem;
 }
@@ -1007,6 +1126,309 @@ pre {
   color: var(--text-secondary);
 }
 
+/* ---------- result chart ---------- */
+
+.result-chart {
+  margin-top: 1.1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.result-chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.result-chart-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: none;
+}
+
+.result-chart-expand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-hover);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.result-chart-expand:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.result-chart-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.result-chart-toggle {
+  display: flex;
+  gap: 0.15rem;
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 0.15rem;
+  flex: none;
+}
+
+.result-chart-toggle button {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  border-radius: var(--radius-full);
+  padding: 0.25rem 0.65rem;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.result-chart-toggle button:hover {
+  color: var(--text-primary);
+}
+
+.result-chart-toggle button.is-active {
+  color: var(--on-accent);
+  background: var(--accent);
+}
+
+.result-bars {
+  display: flex;
+  flex-direction: column;
+}
+
+.result-bar-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(70px, 30%) 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.3rem 0.4rem;
+  border-radius: var(--radius-sm);
+  outline: none;
+}
+
+.result-bar-row:hover,
+.result-bar-row:focus-visible {
+  background: var(--surface-hover);
+}
+
+.result-bar-row:hover .result-bar-tooltip,
+.result-bar-row:focus-visible .result-bar-tooltip {
+  opacity: 1;
+  transform: translateY(-2px);
+}
+
+.result-bar-label {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.result-bar-track {
+  height: 18px;
+  display: flex;
+  align-items: center;
+}
+
+.result-bar-fill {
+  height: 100%;
+  min-width: 3px;
+  background: var(--accent);
+  border-radius: 0 4px 4px 0;
+  transition: width 0.4s ease-out, background-color 0.15s ease;
+}
+
+.result-bar-row:hover .result-bar-fill,
+.result-bar-row:focus-visible .result-bar-fill {
+  background: var(--accent-hover);
+}
+
+.result-bar-value {
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.result-bar-tooltip {
+  position: absolute;
+  left: 0.4rem;
+  bottom: calc(100% + 4px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  padding: 0.4rem 0.6rem;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(2px);
+  pointer-events: none;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  z-index: 5;
+}
+
+.result-bar-tooltip strong {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.result-bar-tooltip span {
+  color: var(--text-muted);
+}
+
+/* ---------- stat tile ---------- */
+
+.stat-tile {
+  margin-top: 1.1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.stat-tile-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.stat-tile-value {
+  font-size: 2.15rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+/* ---------- trend (line) chart ---------- */
+
+.result-line-plot {
+  margin: 0.5rem 0.75rem 0;
+}
+
+.result-line-canvas {
+  position: relative;
+  height: 160px;
+}
+
+.result-line-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.result-line-area {
+  fill: var(--accent);
+  opacity: 0.1;
+  stroke: none;
+}
+
+.result-line-stroke {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.result-line-point {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+}
+
+.result-line-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--bg-elevated);
+  transition: transform 0.12s ease, background-color 0.15s ease;
+}
+
+.result-line-point:hover .result-line-dot,
+.result-line-point:focus-visible .result-line-dot {
+  transform: scale(1.35);
+  background: var(--accent-hover);
+}
+
+.result-line-point:hover .result-line-tooltip,
+.result-line-point:focus-visible .result-line-tooltip {
+  opacity: 1;
+  transform: translate(-50%, -8px);
+}
+
+.result-line-tooltip {
+  left: 50%;
+  bottom: 100%;
+  transform: translate(-50%, 0);
+}
+
+.result-line-endlabel {
+  position: absolute;
+  /* Anchored by its right edge, not its left - it's always the last point
+     (~98% across), so growing rightward from there overflows the card. */
+  transform: translate(calc(-100% - 4px), -140%);
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.result-line-axis-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+}
+
+.result-line-axis-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .result-bar-row {
+    grid-template-columns: minmax(60px, 38%) 1fr auto;
+    gap: 0.5rem;
+  }
+
+  .result-bar-label,
+  .result-bar-value {
+    font-size: 0.76rem;
+  }
+}
+
 .copy-answer-btn {
   display: inline-flex;
   align-items: center;
@@ -1134,5 +1556,21 @@ pre {
 
   .query-hint {
     display: none;
+  }
+
+  .stat-tile-value {
+    font-size: 1.7rem;
+  }
+
+  .result-line-plot {
+    margin: 0.5rem 0.5rem 0;
+  }
+
+  .result-line-canvas {
+    height: 130px;
+  }
+
+  .result-line-endlabel {
+    font-size: 0.72rem;
   }
 }

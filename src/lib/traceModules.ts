@@ -1,4 +1,5 @@
 import type { TraceEvent } from "../types";
+import { titleize } from "./format";
 
 export interface TraceModule {
   key: string;
@@ -26,10 +27,6 @@ const MODULE_RULES: ModuleRule[] = [
   { key: "execute_sql", label: "Execute SQL", test: /execut|run.?sql|query.?db/i },
   { key: "synthesize", label: "Synthesize answer", test: /synthes|final.?answer|compose|answer/i },
 ];
-
-function titleize(node: string): string {
-  return node.replace(/[_-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-}
 
 function classify(node: string): { key: string; label: string } {
   const rule = MODULE_RULES.find((r) => r.test.test(node));

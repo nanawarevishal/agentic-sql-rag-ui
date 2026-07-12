@@ -15,10 +15,10 @@ function VerdictBadge({ verdict }: { verdict: string }) {
   );
 }
 
-function RowsTable({ rows }: { rows: Row[] }) {
+export function RowsTable({ rows, limit = 5 }: { rows: Row[]; limit?: number }) {
   if (rows.length === 0) return <p className="trace-detail-note">No rows returned.</p>;
   const columns = Object.keys(rows[0]);
-  const preview = rows.slice(0, 5);
+  const preview = rows.slice(0, limit);
   return (
     <div className="trace-rows-wrap">
       <table className="trace-rows-table">
