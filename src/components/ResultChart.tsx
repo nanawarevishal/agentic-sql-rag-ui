@@ -35,7 +35,12 @@ export function ResultChart({ rows, labelKey, valueKey, inPanel }: Props) {
           const value = Number(row[valueKey]) || 0;
           const label = String(row[labelKey]);
           const pct = Math.max((Math.max(value, 0) / max) * 100, 2);
-          const mix = sorted.length > 1 ? 100 - (i / (sorted.length - 1)) * 45 : 100;
+          // Linear-by-rank spread the 45pt range too thin across many rows (e.g. 13
+          // rows -> ~3.75pt/step, imperceptible on a single hue). Front-load the
+          // contrast with sqrt easing so the long, prominent top bars separate
+          // clearly; the tail bars are short anyway so their compression is fine.
+          const t = sorted.length > 1 ? i / (sorted.length - 1) : 0;
+          const mix = 100 - Math.sqrt(t) * 60;
           return (
             <li key={i} className="result-bar-row" tabIndex={0}>
               <span className="result-bar-label" title={label}>
