@@ -13,12 +13,23 @@ const TOGGLES: Array<{ key: keyof SettingsState; label: string; hint: string }> 
   { key: "enableSelfRagCritique", label: "Self-RAG critique/retry", hint: "Critique the answer and retry if weak" },
 ];
 
+// Shown once to point first-time users at the reasoning-gate toggles, since
+// they default off and are otherwise easy to miss behind a menu button.
+const HINT_SEEN_KEY = "agentic-sql-rag:seenAgentBehaviorMenu";
+
 function SettingsMenu({ disabled }: { disabled: boolean }) {
   const [open, setOpen] = useState(false);
+  const [showHint, setShowHint] = useState(() => localStorage.getItem(HINT_SEEN_KEY) !== "1");
   const rootRef = useRef<HTMLDivElement>(null);
   const dispatch = useAppDispatch();
   const settings = useAppSelector((state) => state.settings);
   const activeCount = TOGGLES.filter(({ key }) => settings[key]).length;
+
+  const dismissHint = () => {
+    if (!showHint) return;
+    setShowHint(false);
+    localStorage.setItem(HINT_SEEN_KEY, "1");
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -42,7 +53,10 @@ function SettingsMenu({ disabled }: { disabled: boolean }) {
         type="button"
         className={`mode-menu-trigger ${activeCount > 0 ? "has-active" : ""}`}
         disabled={disabled}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          setOpen((v) => !v);
+          dismissHint();
+        }}
         aria-haspopup="menu"
         aria-expanded={open}
       >
@@ -54,6 +68,7 @@ function SettingsMenu({ disabled }: { disabled: boolean }) {
         </svg>
         Agent behavior
         {activeCount > 0 && <span className="mode-menu-count">{activeCount}</span>}
+        {showHint && activeCount === 0 && <span className="mode-menu-hint-dot" aria-hidden="true" />}
       </button>
 
       {open && (

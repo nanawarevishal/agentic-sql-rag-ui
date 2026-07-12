@@ -142,6 +142,12 @@
   padding: 1rem 1.5rem 1.25rem;
 }
 
+.chat-turn + .chat-turn {
+  margin-top: 3rem;
+  padding-top: 2.5rem;
+  border-top: 1px solid var(--border);
+}
+
 .chat-user-message {
   margin-bottom: 1.5rem;
 }
@@ -209,6 +215,7 @@
 }
 
 .query-composer {
+  position: relative;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -230,11 +237,8 @@
 
 /* ---------- agent behavior dropdown ---------- */
 
-.mode-menu {
-  position: relative;
-}
-
 .mode-menu-trigger {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -247,6 +251,18 @@
   border-radius: var(--radius-full);
   cursor: pointer;
   transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.mode-menu-hint-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--bg-elevated);
+  animation: pulse 1.6s ease-in-out infinite;
 }
 
 .mode-menu-trigger:hover:not(:disabled) {
@@ -274,11 +290,19 @@
   font-weight: 700;
 }
 
+/* Anchored to .query-composer (the whole card, position: relative below),
+   not the trigger button itself - the trigger sits directly under the
+   textarea with no gap, so anchoring there means any non-trivial panel
+   height overlaps the textarea. Popping up from the card's own top edge
+   clears it entirely regardless of panel height or viewport size. */
 .mode-menu-panel {
   position: absolute;
   bottom: calc(100% + 0.6rem);
-  left: 0;
+  left: 1rem;
   width: 280px;
+  max-width: calc(100vw - 3.5rem);
+  max-height: min(60vh, 320px);
+  overflow-y: auto;
   background: var(--bg-elevated);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
@@ -795,6 +819,129 @@ pre {
   margin-top: 0.35rem;
 }
 
+/* ---------- trace step detail (TraceDetail.tsx) ---------- */
+
+.trace-detail-note {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.trace-error-text {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  color: var(--danger);
+}
+
+.trace-verdict-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.3rem;
+}
+
+.trace-verdict {
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.12rem 0.5rem;
+  border-radius: var(--radius-full);
+}
+
+.trace-verdict.is-positive {
+  color: var(--success);
+  background: var(--success-soft);
+}
+
+.trace-verdict.is-negative {
+  color: var(--warning);
+  background: var(--warning-soft);
+}
+
+.trace-confidence {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.trace-verdict-row .trace-detail-note {
+  flex-basis: 100%;
+  margin-top: 0.1rem;
+}
+
+.trace-subq-list {
+  margin: 0.3rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.trace-chunk-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.3rem;
+}
+
+.trace-chunk-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-full);
+}
+
+.trace-chunk-pill em {
+  font-style: normal;
+  color: var(--text-muted);
+}
+
+.trace-rows-wrap {
+  margin-top: 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: auto;
+}
+
+.trace-rows-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.78rem;
+}
+
+.trace-rows-table th,
+.trace-rows-table td {
+  padding: 0.35rem 0.6rem;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+
+.trace-rows-table th {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg-elevated);
+}
+
+.trace-rows-table tr:last-child td {
+  border-bottom: none;
+}
+
+.trace-rows-wrap .trace-detail-note {
+  padding: 0.4rem 0.6rem;
+}
+
 /* ---------- answer view ---------- */
 
 .answer-view {
@@ -804,6 +951,11 @@ pre {
   border-radius: var(--radius-lg);
   padding: 1.25rem 1.4rem 1.4rem;
   animation: answer-in 0.4s ease-out;
+}
+
+.answer-view.is-empty {
+  border-color: color-mix(in srgb, var(--warning) 40%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--warning) 40%, transparent), var(--shadow-md);
 }
 
 @keyframes answer-in {
@@ -829,6 +981,10 @@ pre {
   margin-bottom: 0.65rem;
 }
 
+.answer-view.is-empty .answer-header {
+  color: var(--warning);
+}
+
 .answer-icon {
   display: flex;
   align-items: center;
@@ -840,59 +996,65 @@ pre {
   color: var(--on-accent);
 }
 
+.answer-view.is-empty .answer-icon {
+  background: var(--warning);
+}
+
+.answer-empty-hint {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.copy-answer-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: auto;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: none;
+  color: var(--text-muted);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.copy-answer-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
 .final-answer {
   font-size: 1.02rem;
   line-height: 1.65;
-  white-space: pre-wrap;
+  color: var(--text-primary);
+}
+
+.final-answer p {
   margin: 0;
-  color: var(--text-primary);
 }
 
-.sub-results {
-  margin-top: 1.1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border);
-}
-
-.sub-results summary {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.sub-results summary:hover {
-  color: var(--text-primary);
-}
-
-.sub-results-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
+.final-answer p + p {
   margin-top: 0.85rem;
 }
 
-.sub-result {
-  border-top: 1px solid var(--border);
-  padding-top: 0.85rem;
-  font-size: 0.88rem;
+.final-answer ul,
+.final-answer ol {
+  margin: 0.85rem 0 0;
+  padding-left: 1.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
-.sub-result strong {
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.retry-badge {
-  display: inline-block;
-  margin-top: 0.5rem;
-  background: var(--warning-soft);
-  color: var(--warning);
-  border: 1px solid color-mix(in srgb, var(--warning) 35%, transparent);
-  padding: 0.15rem 0.55rem;
-  border-radius: var(--radius-full);
-  font-size: 0.72rem;
-  font-weight: 600;
+.final-answer li {
+  padding-left: 0.2rem;
 }
 
 /* ---------- admin page ---------- */

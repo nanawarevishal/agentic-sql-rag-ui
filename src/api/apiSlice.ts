@@ -5,7 +5,7 @@ import type { HealthResponse, SchemaStatsResponse } from "../types";
 // these paths to the FastAPI backend; in prod, serve the built frontend
 // behind the same reverse proxy as the API so paths stay relative.
 //
-// /query isn't here: it's a streamed NDJSON body (see useStreamingQuery),
+// /query isn't here: it's a streamed NDJSON body (see useStreamingChat),
 // which fetchBaseQuery can't consume - it awaits response.json() on the
 // whole body.
 const baseUrl = import.meta.env.VITE_API_BASE_URL ?? "";

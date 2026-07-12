@@ -42,7 +42,16 @@ export interface QueryResponse {
 export type StreamLine =
   | ({ type: "trace" } & TraceEvent)
   | { type: "sub_result"; result: SubQuestionResult }
-  | { type: "final"; question: string; final_answer: string | null; sub_results: SubQuestionResult[] };
+  | { type: "final"; question: string; final_answer: string | null; sub_results: SubQuestionResult[] }
+  | { type: "error"; message?: string; detail?: unknown };
+
+// FastAPI's error body shape varies by failure kind: a plain string, a list
+// of pydantic validation errors (422), or this backend's custom
+// {error, message, details, type} shape (500s from app/api routers).
+export type ApiErrorBody =
+  | { detail: string }
+  | { detail: Array<{ msg?: string; [key: string]: unknown }> }
+  | { detail: { message?: string; error?: string; [key: string]: unknown } };
 
 export interface HealthResponse {
   status: string;

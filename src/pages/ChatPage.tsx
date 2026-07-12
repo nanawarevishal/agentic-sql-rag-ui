@@ -1,18 +1,14 @@
-import { useState } from "react";
 import { useAppSelector } from "../store/hooks";
-import { useStreamingQuery } from "../hooks/useStreamingQuery";
+import { useStreamingChat } from "../hooks/useStreamingChat";
 import { QueryForm } from "../components/QueryForm";
-import { TraceView } from "../components/TraceView";
-import { AnswerView } from "../components/AnswerView";
+import { ChatTurnView } from "../components/ChatTurnView";
 
 export function ChatPage() {
   const settings = useAppSelector((state) => state.settings);
-  const { trace, subResults, finalAnswer, isStreaming, error, run } = useStreamingQuery();
-  const [askedQuestion, setAskedQuestion] = useState<string | null>(null);
+  const { turns, ask } = useStreamingChat();
 
   const handleSubmit = (question: string) => {
-    setAskedQuestion(question);
-    run({
+    ask({
       question,
       enable_decomposition: settings.enableDecomposition,
       enable_crag_grading: settings.enableCragGrading,
@@ -20,13 +16,12 @@ export function ChatPage() {
     });
   };
 
-  const hasStarted = askedQuestion !== null;
-  const isDone = hasStarted && !isStreaming && !error;
+  const pending = turns.length > 0 && turns[turns.length - 1].isStreaming;
 
   return (
     <div className="chat-page">
       <div className="chat-scroll">
-        {!hasStarted && (
+        {turns.length === 0 && (
           <div className="chat-hero">
             <span className="chat-hero-eyebrow">Text-to-SQL agent</span>
             <h1>Ask your database anything</h1>
@@ -37,47 +32,14 @@ export function ChatPage() {
           </div>
         )}
 
-        {hasStarted && (
-          <div className="chat-user-message">
-            <span className="chat-user-label">You asked</span>
-            <p>{askedQuestion}</p>
-          </div>
-        )}
-
-        {error && (
-          <div className="error-banner">
-            <strong>Request failed</strong>
-            <span>{error}</span>
-          </div>
-        )}
-
-        {isStreaming && trace.length === 0 && (
-          <div className="loading-banner">
-            <span className="dot-pulse" />
-            Running agent graph...
-          </div>
-        )}
-
-        {trace.length > 0 && (
-          <div className="results">
-            <TraceView events={trace} isStreaming={isStreaming} />
-            {isDone && (
-              <AnswerView
-                result={{
-                  question: askedQuestion ?? "",
-                  final_answer: finalAnswer,
-                  sub_results: subResults,
-                  trace,
-                }}
-              />
-            )}
-          </div>
-        )}
+        {turns.map((turn) => (
+          <ChatTurnView key={turn.id} turn={turn} />
+        ))}
       </div>
 
       <div className="chat-composer-dock">
         <div className="chat-composer-dock-inner">
-          <QueryForm onSubmit={handleSubmit} pending={isStreaming} />
+          <QueryForm onSubmit={handleSubmit} pending={pending} />
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { TraceEvent } from "../types";
 import { groupIntoModules, moduleStatus, type TraceModule } from "../lib/traceModules";
+import { TraceDetail } from "./TraceDetail";
 
 interface Props {
   events: TraceEvent[];
@@ -74,12 +75,22 @@ function Module({
                 {event.sub_question && <span className="trace-subq">{event.sub_question}</span>}
               </div>
               <p className="trace-summary">{event.summary}</p>
-              {Object.keys(event.detail).length > 0 && (
-                <details>
-                  <summary>Detail</summary>
-                  <pre>{JSON.stringify(event.detail, null, 2)}</pre>
-                </details>
-              )}
+              {(() => {
+                // TraceDetail returns null when a node's detail has nothing
+                // worth showing (e.g. planner with only one sub-question) -
+                // calling it directly (it's a plain function, no hooks) lets
+                // the collapsible wrapper itself disappear instead of
+                // rendering an empty "Detail" toggle.
+                const content = TraceDetail({ event });
+                return (
+                  content && (
+                    <details>
+                      <summary>Detail</summary>
+                      {content}
+                    </details>
+                  )
+                );
+              })()}
             </li>
           );
         })}
