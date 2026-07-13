@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { ChatTurn } from "../hooks/useStreamingChat";
 import { TraceView } from "./TraceView";
 import { AnswerView } from "./AnswerView";
@@ -6,13 +7,43 @@ interface Props {
   turn: ChatTurn;
 }
 
+function TraceToggleButton({ open, onClick }: { open: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      className="trace-toggle-btn"
+      onClick={onClick}
+      aria-expanded={open}
+    >
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 4v6h6M20 20v-6h-6M4 10a8 8 0 0 1 14.5-4.5M20 14a8 8 0 0 1-14.5 4.5" />
+      </svg>
+      {open ? "Hide agent trace" : "Agent trace"}
+    </button>
+  );
+}
+
 export function ChatTurnView({ turn }: Props) {
   const isDone = !turn.isStreaming && !turn.error;
+  const hasTrace = turn.trace.length > 0;
+  const [showTrace, setShowTrace] = useState(false);
+
+  // The trace streams live and stays visible while the run is in progress -
+  // that's the "wow moment" of watching the agent reason. Once the answer is
+  // complete, it collapses behind a toggle in the question header instead:
+  // the answer is the point at that stage, and the reasoning steps are still
+  // one click away for anyone who wants to inspect them.
+  const traceVisible = hasTrace && (!isDone || showTrace);
 
   return (
     <div className="chat-turn">
       <div className="chat-user-message">
-        <span className="chat-user-label">You asked</span>
+        <div className="chat-user-message-header">
+          <span className="chat-user-label">You asked</span>
+          {isDone && hasTrace && (
+            <TraceToggleButton open={showTrace} onClick={() => setShowTrace((v) => !v)} />
+          )}
+        </div>
         <p>{turn.question}</p>
       </div>
 
@@ -30,9 +61,9 @@ export function ChatTurnView({ turn }: Props) {
         </div>
       )}
 
-      {turn.trace.length > 0 && (
+      {(traceVisible || isDone) && (
         <div className="results">
-          <TraceView events={turn.trace} isStreaming={turn.isStreaming} />
+          {traceVisible && <TraceView events={turn.trace} isStreaming={turn.isStreaming} />}
           {isDone && (
             <AnswerView
               result={{
