@@ -36,6 +36,10 @@ function ChatPageContent() {
     loadConversation(conversation.id, messages);
   };
 
+  const handleConversationDeleted = (deletedId: string) => {
+    if (deletedId === conversationId) startNewConversation();
+  };
+
   const pending = turns.length > 0 && turns[turns.length - 1].isStreaming;
 
   return (
@@ -44,6 +48,7 @@ function ChatPageContent() {
         activeConversationId={conversationId}
         onSelect={handleSelectConversation}
         onNewChat={startNewConversation}
+        onDeleted={handleConversationDeleted}
       />
 
       <div className="chat-column">

@@ -4,6 +4,7 @@ interface Props {
   activeConversationId: string | null;
   onSelect: (conversation: Conversation) => void;
   onNewChat: () => void;
+  onDeleted: (conversationId: string) => void;
 }
 
 function formatRelativeTime(iso: string): string {
@@ -15,7 +16,7 @@ function formatRelativeTime(iso: string): string {
   return `${Math.round(diffHr / 24)}d ago`;
 }
 
-export function ConversationSidebar({ activeConversationId, onSelect, onNewChat }: Props) {
+export function ConversationSidebar({ activeConversationId, onSelect, onNewChat, onDeleted }: Props) {
   const { data: conversations = [], isLoading } = useGetConversationsQuery();
   const [deleteConversation] = useDeleteConversationMutation();
 
@@ -46,7 +47,10 @@ export function ConversationSidebar({ activeConversationId, onSelect, onNewChat 
               title="Delete conversation"
               onClick={(e) => {
                 e.stopPropagation();
-                deleteConversation(conversation.id);
+                deleteConversation(conversation.id)
+                  .unwrap()
+                  .then(() => onDeleted(conversation.id))
+                  .catch(() => alert("Failed to delete conversation. Please try again."));
               }}
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
