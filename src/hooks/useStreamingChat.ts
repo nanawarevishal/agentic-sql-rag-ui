@@ -1,6 +1,11 @@
 import { useCallback, useRef, useState } from "react";
 import type { QueryRequest, StreamLine, SubQuestionResult, TraceEvent } from "../types";
 import { parseErrorBody } from "../lib/parseErrorBody";
+import { api } from "../api/apiSlice";
+import { useRefreshSessionMutation } from "../features/auth/authApi";
+import { clearCredentials, setCredentials } from "../features/auth/authSlice";
+import type { ConversationMessage } from "../features/conversations/conversationsApi";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
 
 // Empty base URL: in dev, Vite's proxy (see vite.config.ts) forwards these
 // paths to the FastAPI backend; in prod, serve the built frontend behind
@@ -21,22 +26,61 @@ function makeId(): string {
   return typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
 }
 
+type AskableRequest = Omit<QueryRequest, "stream" | "conversation_id">;
+
 // One conversation's worth of turns, each independently streamed. POST
 // /query with stream: true returns a chunked NDJSON body - one JSON object
 // per line, discriminated by `type` ("trace" as each graph node finishes,
 // "sub_result" per resolved sub-question, then a closing "final" line).
 // Each turn tracks its own state so earlier answers stay visible (and keep
 // their own collapsed trace) while a new question streams in below them.
+//
+// This hook does its own fetch (not RTK Query, which can't consume a
+// streamed body) and so duplicates apiSlice.ts's auth header + 401
+// reauth-once-then-retry handling rather than sharing it.
 export function useStreamingChat() {
   const [turns, setTurns] = useState<ChatTurn[]>([]);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const dispatch = useAppDispatch();
+  const accessToken = useAppSelector((state) => state.auth.accessToken);
+  const [refreshSession] = useRefreshSessionMutation();
 
   const updateTurn = useCallback((id: string, patch: Partial<ChatTurn> | ((t: ChatTurn) => Partial<ChatTurn>)) => {
     setTurns((all) => all.map((t) => (t.id === id ? { ...t, ...(typeof patch === "function" ? patch(t) : patch) } : t)));
   }, []);
 
+  const startNewConversation = useCallback(() => {
+    abortRef.current?.abort();
+    setConversationId(null);
+    setTurns([]);
+  }, []);
+
+  const loadConversation = useCallback((id: string, messages: ConversationMessage[]) => {
+    abortRef.current?.abort();
+    const mapped: ChatTurn[] = [];
+    // Messages are stored/returned in pairs (user, then assistant) per turn
+    // - see _record_turn in app/api/routers/query.py.
+    for (let i = 0; i < messages.length; i += 2) {
+      const userMessage = messages[i];
+      const assistantMessage = messages[i + 1];
+      if (!userMessage) continue;
+      mapped.push({
+        id: userMessage.id,
+        question: userMessage.content,
+        trace: assistantMessage?.trace ?? [],
+        subResults: assistantMessage?.sub_results ?? [],
+        finalAnswer: assistantMessage?.content ?? null,
+        isStreaming: false,
+        error: null,
+      });
+    }
+    setConversationId(id);
+    setTurns(mapped);
+  }, []);
+
   const ask = useCallback(
-    async (request: Omit<QueryRequest, "stream">) => {
+    async (request: AskableRequest) => {
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
@@ -55,18 +99,40 @@ export function useStreamingChat() {
           updateTurn(id, (t) => ({ subResults: [...t.subResults, line.result] }));
         } else if (line.type === "final") {
           updateTurn(id, { finalAnswer: line.final_answer, subResults: line.sub_results, isStreaming: false });
+          setConversationId(line.conversation_id);
+          dispatch(api.util.invalidateTags(["Conversations"]));
         } else if (line.type === "error") {
           updateTurn(id, { isStreaming: false, error: line.message ?? "The agent run failed" });
         }
       };
 
-      try {
-        const res = await fetch(`${baseUrl}/query`, {
+      const requestBody = JSON.stringify({ ...request, conversation_id: conversationId, stream: true });
+      const doFetch = (token: string | null) =>
+        fetch(`${baseUrl}/query`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...request, stream: true }),
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          credentials: "include",
+          body: requestBody,
           signal: controller.signal,
         });
+
+      try {
+        let res = await doFetch(accessToken);
+
+        if (res.status === 401) {
+          try {
+            const session = await refreshSession().unwrap();
+            dispatch(setCredentials(session));
+            res = await doFetch(session.access_token);
+          } catch {
+            dispatch(clearCredentials());
+            updateTurn(id, { isStreaming: false, error: "Session expired. Please sign in again." });
+            return;
+          }
+        }
 
         if (!res.ok || !res.body) {
           let message = `Request failed (${res.status})`;
@@ -108,8 +174,8 @@ export function useStreamingChat() {
         updateTurn(id, { isStreaming: false, error: message });
       }
     },
-    [updateTurn]
+    [accessToken, conversationId, dispatch, refreshSession, updateTurn]
   );
 
-  return { turns, ask };
+  return { turns, ask, conversationId, startNewConversation, loadConversation };
 }

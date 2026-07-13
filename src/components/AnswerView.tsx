@@ -6,7 +6,7 @@ import { TrendChart } from "./TrendChart";
 import { StatTile } from "./StatTile";
 
 interface Props {
-  result: QueryResponse;
+  result: Omit<QueryResponse, "conversation_id">;
 }
 
 // The SQL behind each sub-question already lives in the trace panel above

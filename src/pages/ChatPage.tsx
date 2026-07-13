@@ -5,6 +5,8 @@ import { QueryForm } from "../components/QueryForm";
 import { ChatTurnView } from "../components/ChatTurnView";
 import { ChartFocusPanel } from "../components/ChartFocusPanel";
 import { ChartFocusProvider } from "../components/ChartFocusProvider";
+import { ConversationSidebar } from "../features/conversations/ConversationSidebar";
+import { useLazyGetConversationMessagesQuery, type Conversation } from "../features/conversations/conversationsApi";
 
 export function ChatPage() {
   return (
@@ -16,8 +18,9 @@ export function ChatPage() {
 
 function ChatPageContent() {
   const settings = useAppSelector((state) => state.settings);
-  const { turns, ask } = useStreamingChat();
+  const { turns, ask, conversationId, startNewConversation, loadConversation } = useStreamingChat();
   const { focused } = useChartFocus();
+  const [fetchConversationMessages] = useLazyGetConversationMessagesQuery();
 
   const handleSubmit = (question: string) => {
     ask({
@@ -28,10 +31,21 @@ function ChatPageContent() {
     });
   };
 
+  const handleSelectConversation = async (conversation: Conversation) => {
+    const messages = await fetchConversationMessages(conversation.id).unwrap();
+    loadConversation(conversation.id, messages);
+  };
+
   const pending = turns.length > 0 && turns[turns.length - 1].isStreaming;
 
   return (
     <div className={`chat-page ${focused ? "has-focus-panel" : ""}`}>
+      <ConversationSidebar
+        activeConversationId={conversationId}
+        onSelect={handleSelectConversation}
+        onNewChat={startNewConversation}
+      />
+
       <div className="chat-column">
         <div className="chat-scroll">
           {turns.length === 0 && (

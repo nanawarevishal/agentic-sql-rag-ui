@@ -3,6 +3,9 @@
 
 export interface QueryRequest {
   question: string;
+  // Omit to start a new conversation; pass a prior response's
+  // conversation_id to append this turn to it.
+  conversation_id?: string | null;
   enable_out_of_scope_filter?: boolean;
   enable_decomposition?: boolean;
   enable_crag_grading?: boolean;
@@ -32,6 +35,7 @@ export interface SubQuestionResult {
 
 export interface QueryResponse {
   question: string;
+  conversation_id: string;
   final_answer: string | null;
   sub_results: SubQuestionResult[];
   trace: TraceEvent[];
@@ -45,7 +49,13 @@ export interface QueryResponse {
 export type StreamLine =
   | ({ type: "trace" } & TraceEvent)
   | { type: "sub_result"; result: SubQuestionResult }
-  | { type: "final"; question: string; final_answer: string | null; sub_results: SubQuestionResult[] }
+  | {
+      type: "final";
+      question: string;
+      conversation_id: string;
+      final_answer: string | null;
+      sub_results: SubQuestionResult[];
+    }
   | { type: "error"; message?: string; detail?: unknown };
 
 // FastAPI's error body shape varies by failure kind: a plain string, a list

@@ -25,6 +25,8 @@ export default defineConfig({
       '/health': BACKEND_URL,
       '/info': BACKEND_URL,
       '/schema': BACKEND_URL,
+      '/auth': BACKEND_URL,
+      '/conversations': BACKEND_URL,
     },
   },
 })
