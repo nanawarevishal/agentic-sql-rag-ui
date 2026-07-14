@@ -1,47 +1,237 @@
-import { useGetSchemaStatsQuery, useIngestSchemaMutation } from "../api/apiSlice";
+import { useState, type FormEvent } from "react";
+import { parseErrorBody } from "../lib/parseErrorBody";
+import {
+  useCreateDataSourceMutation,
+  useDeleteDataSourceMutation,
+  useGetDataSourceStatsQuery,
+  useGetDataSourcesQuery,
+  useTriggerDataSourceIngestMutation,
+  useUploadDataSourceMutation,
+  type DataSource,
+} from "../features/datasources/dataSourcesApi";
+
+function mutationErrorMessage(error: unknown, fallback: string): string {
+  if (error && typeof error === "object" && "data" in error) {
+    return parseErrorBody((error as { data?: unknown }).data) ?? fallback;
+  }
+  return fallback;
+}
+
+function DataSourceRow({ dataSource }: { dataSource: DataSource }) {
+  const [deleteDataSource, { isLoading: isDeleting }] = useDeleteDataSourceMutation();
+  const [triggerIngest, { isLoading: isIngesting }] = useTriggerDataSourceIngestMutation();
+  const [showStats, setShowStats] = useState(false);
+  const { data: stats } = useGetDataSourceStatsQuery(dataSource.id, { skip: !showStats });
+  const isBuiltin = dataSource.kind === "builtin";
+
+  return (
+    <div className="ds-item">
+      <div className="ds-item-main">
+        <div className="ds-item-title">
+          <span>{dataSource.name}</span>
+          <span className="ds-kind">{dataSource.kind}</span>
+          <span className={`ds-status ds-status-${dataSource.status}`}>{dataSource.status}</span>
+        </div>
+        {dataSource.error_message && <p className="ds-error">{dataSource.error_message}</p>}
+        <p className="ds-meta">
+          Created {new Date(dataSource.created_at).toLocaleString()}
+          {dataSource.last_ingested_at && ` · last ingested ${new Date(dataSource.last_ingested_at).toLocaleString()}`}
+        </p>
+        {showStats && <pre className="sql-block">{JSON.stringify(stats ?? {}, null, 2)}</pre>}
+      </div>
+      <div className="ds-item-actions">
+        <button type="button" className="btn-secondary" onClick={() => setShowStats((v) => !v)}>
+          {showStats ? "Hide stats" : "Stats"}
+        </button>
+        <button
+          type="button"
+          className="btn-secondary"
+          disabled={isIngesting}
+          onClick={() => triggerIngest(dataSource.id)}
+        >
+          {isIngesting ? <span className="spinner" /> : "Re-ingest"}
+        </button>
+        {!isBuiltin && (
+          <button
+            type="button"
+            className="btn-secondary ds-delete"
+            disabled={isDeleting}
+            onClick={() => {
+              if (!confirm(`Delete data source "${dataSource.name}"? This can't be undone.`)) return;
+              deleteDataSource(dataSource.id)
+                .unwrap()
+                .catch(() => alert("Failed to delete data source. Please try again."));
+            }}
+          >
+            Delete
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ConnectForm() {
+  const [name, setName] = useState("");
+  const [connectionString, setConnectionString] = useState("");
+  const [createDataSource, { isLoading, error }] = useCreateDataSourceMutation();
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    try {
+      await createDataSource({ name, connection_string: connectionString }).unwrap();
+      setName("");
+      setConnectionString("");
+    } catch {
+      // surfaced via `error` below
+    }
+  };
+
+  return (
+    <form className="ds-form" onSubmit={submit}>
+      <label className="ds-field">
+        <span>Name</span>
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="My Postgres DB" required />
+      </label>
+      <label className="ds-field">
+        <span>Connection string</span>
+        <input
+          value={connectionString}
+          onChange={(e) => setConnectionString(e.target.value)}
+          placeholder="postgresql://user:password@host:5432/dbname"
+          required
+        />
+      </label>
+      {error && <p className="ds-error">{mutationErrorMessage(error, "Could not connect to that database.")}</p>}
+      <button type="submit" className="btn-primary" disabled={isLoading}>
+        {isLoading ? (
+          <>
+            <span className="spinner" />
+            Connecting
+          </>
+        ) : (
+          "Connect"
+        )}
+      </button>
+    </form>
+  );
+}
+
+function UploadForm() {
+  const [name, setName] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [notes, setNotes] = useState("");
+  const [uploadDataSource, { isLoading, error }] = useUploadDataSourceMutation();
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!file) return;
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("dump", file);
+    if (notes.trim()) formData.append("notes", notes);
+    try {
+      await uploadDataSource(formData).unwrap();
+      setName("");
+      setFile(null);
+      setNotes("");
+    } catch {
+      // surfaced via `error` below
+    }
+  };
+
+  return (
+    <form className="ds-form" onSubmit={submit}>
+      <label className="ds-field">
+        <span>Name</span>
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="My Uploaded DB" required />
+      </label>
+      <label className="ds-field">
+        <span>Dump file (.sql, plain-text pg_dump --format=plain)</span>
+        <input
+          type="file"
+          accept=".sql"
+          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          required
+        />
+      </label>
+      <label className="ds-field">
+        <span>Table notes (optional)</span>
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder={"## table_name\nBusiness context for this table..."}
+          rows={3}
+        />
+      </label>
+      {error && <p className="ds-error">{mutationErrorMessage(error, "Could not upload/restore that dump.")}</p>}
+      <button type="submit" className="btn-primary" disabled={isLoading || !file}>
+        {isLoading ? (
+          <>
+            <span className="spinner" />
+            Uploading &amp; restoring
+          </>
+        ) : (
+          "Upload"
+        )}
+      </button>
+    </form>
+  );
+}
 
 export function AdminPage() {
-  const { data: stats, isFetching, refetch } = useGetSchemaStatsQuery();
-  const [ingestSchema, { isLoading: isIngesting }] = useIngestSchemaMutation();
+  // Light constant poll while this page is open, so a data source's
+  // pending -> ready/failed transition shows up without a manual refresh.
+  // Stops as soon as the page unmounts - cheap enough not to bother making
+  // conditional on whether anything is actually pending right now.
+  const { data: dataSources = [], isFetching } = useGetDataSourcesQuery(undefined, { pollingInterval: 3000 });
 
   return (
     <div className="admin-page">
       <div className="admin-card">
         <div className="admin-card-header">
           <div>
-            <h2>Schema RAG index</h2>
-            <p>Rebuild the vector index from the live database schema.</p>
+            <h2>Data sources</h2>
+            <p>Databases the agent can query - each with its own isolated schema-RAG index.</p>
           </div>
-          <button
-            type="button"
-            className="btn-primary"
-            disabled={isIngesting}
-            onClick={async () => {
-              await ingestSchema();
-              refetch();
-            }}
-          >
-            {isIngesting ? (
-              <>
-                <span className="spinner" />
-                Rebuilding
-              </>
-            ) : (
-              "Rebuild index"
-            )}
-          </button>
         </div>
-
         <div className="admin-card-body">
-          <h3>Index stats</h3>
-          {isFetching ? (
+          {isFetching && dataSources.length === 0 ? (
             <div className="loading-banner">
               <span className="dot-pulse" />
               Loading...
             </div>
           ) : (
-            <pre className="sql-block">{JSON.stringify(stats?.stats ?? {}, null, 2)}</pre>
+            <div className="ds-list">
+              {dataSources.map((ds) => (
+                <DataSourceRow key={ds.id} dataSource={ds} />
+              ))}
+            </div>
           )}
+        </div>
+      </div>
+
+      <div className="admin-card">
+        <div className="admin-card-header">
+          <div>
+            <h2>Connect to a database</h2>
+            <p>Paste a connection string for a Postgres database you already run.</p>
+          </div>
+        </div>
+        <div className="admin-card-body">
+          <ConnectForm />
+        </div>
+      </div>
+
+      <div className="admin-card">
+        <div className="admin-card-header">
+          <div>
+            <h2>Upload a database</h2>
+            <p>Upload a plain-SQL dump - we'll provision a new database and restore it for you.</p>
+          </div>
+        </div>
+        <div className="admin-card-body">
+          <UploadForm />
         </div>
       </div>
     </div>

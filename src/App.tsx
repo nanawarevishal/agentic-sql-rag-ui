@@ -63,7 +63,7 @@ function App() {
                 Query
               </NavLink>
               <NavLink to="/admin" className={({ isActive }) => (isActive ? "active" : "")}>
-                Schema Admin
+                Data Sources
               </NavLink>
             </nav>
           )}

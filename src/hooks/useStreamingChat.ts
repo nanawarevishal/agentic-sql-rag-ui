@@ -41,6 +41,12 @@ type AskableRequest = Omit<QueryRequest, "stream" | "conversation_id">;
 export function useStreamingChat() {
   const [turns, setTurns] = useState<ChatTurn[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  // Which DataSource a NEW conversation will be bound to (see
+  // app/api/routers/query.py::_resolve_conversation) - null means "use the
+  // builtin one". Once conversationId is set, the backend ignores this
+  // field anyway (an existing conversation always keeps its own data
+  // source), so ChatPage disables the picker at that point too.
+  const [dataSourceId, setDataSourceId] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const dispatch = useAppDispatch();
   const accessToken = useAppSelector((state) => state.auth.accessToken);
@@ -106,7 +112,12 @@ export function useStreamingChat() {
         }
       };
 
-      const requestBody = JSON.stringify({ ...request, conversation_id: conversationId, stream: true });
+      const requestBody = JSON.stringify({
+        ...request,
+        conversation_id: conversationId,
+        data_source_id: dataSourceId,
+        stream: true,
+      });
       const doFetch = (token: string | null) =>
         fetch(`${baseUrl}/query`, {
           method: "POST",
@@ -174,8 +185,8 @@ export function useStreamingChat() {
         updateTurn(id, { isStreaming: false, error: message });
       }
     },
-    [accessToken, conversationId, dispatch, refreshSession, updateTurn]
+    [accessToken, conversationId, dataSourceId, dispatch, refreshSession, updateTurn]
   );
 
-  return { turns, ask, conversationId, startNewConversation, loadConversation };
+  return { turns, ask, conversationId, dataSourceId, setDataSourceId, startNewConversation, loadConversation };
 }

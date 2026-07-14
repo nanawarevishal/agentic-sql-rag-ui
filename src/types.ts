@@ -6,6 +6,11 @@ export interface QueryRequest {
   // Omit to start a new conversation; pass a prior response's
   // conversation_id to append this turn to it.
   conversation_id?: string | null;
+  // Which DataSource (see src/features/datasources/dataSourcesApi.ts) to
+  // query. Omit to use the builtin one. Only honored when starting a new
+  // conversation - an existing conversation always keeps querying whatever
+  // data source it was created against.
+  data_source_id?: string | null;
   enable_out_of_scope_filter?: boolean;
   enable_decomposition?: boolean;
   enable_crag_grading?: boolean;
@@ -75,7 +80,3 @@ export interface HealthResponse {
   cache: Record<string, unknown>;
 }
 
-export interface SchemaStatsResponse {
-  status: string;
-  stats: Record<string, unknown>;
-}

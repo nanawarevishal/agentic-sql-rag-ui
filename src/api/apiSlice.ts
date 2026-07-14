@@ -5,7 +5,7 @@ import {
   type FetchArgs,
   type FetchBaseQueryError,
 } from "@reduxjs/toolkit/query/react";
-import type { HealthResponse, SchemaStatsResponse } from "../types";
+import type { HealthResponse } from "../types";
 import type { RootState } from "../store/store";
 import { clearCredentials, setCredentials, type SessionPayload } from "../features/auth/authSlice";
 
@@ -63,18 +63,12 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 export const api = createApi({
   reducerPath: "api",
   baseQuery: baseQueryWithReauth,
-  tagTypes: ["Conversations"],
+  tagTypes: ["Conversations", "DataSources"],
   endpoints: (builder) => ({
     getHealth: builder.query<HealthResponse, void>({
       query: () => "/health",
     }),
-    getSchemaStats: builder.query<SchemaStatsResponse, void>({
-      query: () => "/schema/stats",
-    }),
-    ingestSchema: builder.mutation<Record<string, unknown>, void>({
-      query: () => ({ url: "/schema/ingest", method: "POST" }),
-    }),
   }),
 });
 
-export const { useGetHealthQuery, useGetSchemaStatsQuery, useIngestSchemaMutation } = api;
+export const { useGetHealthQuery } = api;

@@ -7,6 +7,7 @@ import { ChartFocusPanel } from "../components/ChartFocusPanel";
 import { ChartFocusProvider } from "../components/ChartFocusProvider";
 import { ConversationSidebar } from "../features/conversations/ConversationSidebar";
 import { useLazyGetConversationMessagesQuery, type Conversation } from "../features/conversations/conversationsApi";
+import { DataSourceSelect } from "../features/datasources/DataSourceSelect";
 
 export function ChatPage() {
   return (
@@ -18,7 +19,8 @@ export function ChatPage() {
 
 function ChatPageContent() {
   const settings = useAppSelector((state) => state.settings);
-  const { turns, ask, conversationId, startNewConversation, loadConversation } = useStreamingChat();
+  const { turns, ask, conversationId, dataSourceId, setDataSourceId, startNewConversation, loadConversation } =
+    useStreamingChat();
   const { focused } = useChartFocus();
   const [fetchConversationMessages] = useLazyGetConversationMessagesQuery();
 
@@ -71,6 +73,11 @@ function ChatPageContent() {
 
         <div className="chat-composer-dock">
           <div className="chat-composer-dock-inner">
+            <DataSourceSelect
+              value={dataSourceId}
+              onChange={setDataSourceId}
+              disabled={conversationId !== null}
+            />
             <QueryForm onSubmit={handleSubmit} pending={pending} />
           </div>
         </div>
