@@ -62,7 +62,7 @@ export function useStreamingChat() {
     setTurns([]);
   }, []);
 
-  const loadConversation = useCallback((id: string, messages: ConversationMessage[]) => {
+  const loadConversation = useCallback((id: string, dataSourceId: string | null, messages: ConversationMessage[]) => {
     abortRef.current?.abort();
     const mapped: ChatTurn[] = [];
     // Messages are stored/returned in pairs (user, then assistant) per turn
@@ -82,6 +82,7 @@ export function useStreamingChat() {
       });
     }
     setConversationId(id);
+    setDataSourceId(dataSourceId);
     setTurns(mapped);
   }, []);
 

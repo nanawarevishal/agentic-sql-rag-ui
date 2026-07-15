@@ -35,7 +35,7 @@ function ChatPageContent() {
 
   const handleSelectConversation = async (conversation: Conversation) => {
     const messages = await fetchConversationMessages(conversation.id).unwrap();
-    loadConversation(conversation.id, messages);
+    loadConversation(conversation.id, conversation.data_source_id, messages);
   };
 
   const handleConversationDeleted = (deletedId: string) => {
