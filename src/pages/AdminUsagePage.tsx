@@ -9,6 +9,12 @@ function formatPercent(fraction: number): string {
   return `${(fraction * 100).toFixed(1)}%`;
 }
 
+// Per-query cost is often fractions of a cent - the existing $-formatters in
+// lib/format.ts round to 2dp, which would show "$0.00" for most rows here.
+function formatCost(usd: number): string {
+  return usd < 0.01 ? `$${usd.toFixed(4)}` : `$${usd.toFixed(2)}`;
+}
+
 const WINDOW_OPTIONS = [
   { label: "24 hours", days: 1 },
   { label: "7 days", days: 7 },
@@ -73,6 +79,14 @@ export function AdminUsagePage() {
                   <span className="admin-usage-stat-label">p95 latency</span>
                   <span className="admin-usage-stat-value">{formatMs(data.p95_duration_ms)}</span>
                 </div>
+                <div className="admin-usage-stat">
+                  <span className="admin-usage-stat-label">Total cost (est.)</span>
+                  <span className="admin-usage-stat-value">{formatCost(data.total_cost_usd)}</span>
+                </div>
+                <div className="admin-usage-stat">
+                  <span className="admin-usage-stat-label">Avg cost / query</span>
+                  <span className="admin-usage-stat-value">{formatCost(data.avg_cost_per_query_usd)}</span>
+                </div>
               </div>
 
               <div className="admin-usage-tables">
@@ -111,6 +125,7 @@ export function AdminUsagePage() {
                           <th>User</th>
                           <th>Queries</th>
                           <th>Errors</th>
+                          <th>Cost (est.)</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -119,6 +134,7 @@ export function AdminUsagePage() {
                             <td>{u.email}</td>
                             <td>{u.query_count}</td>
                             <td>{u.error_count}</td>
+                            <td>{formatCost(u.cost_usd)}</td>
                           </tr>
                         ))}
                       </tbody>

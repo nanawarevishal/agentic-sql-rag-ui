@@ -11,6 +11,7 @@ export interface UserActivity {
   email: string;
   query_count: number;
   error_count: number;
+  cost_usd: number;
 }
 
 export interface UsageSummary {
@@ -20,6 +21,8 @@ export interface UsageSummary {
   avg_duration_ms: number;
   p50_duration_ms: number;
   p95_duration_ms: number;
+  total_cost_usd: number;
+  avg_cost_per_query_usd: number;
   top_questions: TopQuestion[];
   per_user: UserActivity[];
 }
