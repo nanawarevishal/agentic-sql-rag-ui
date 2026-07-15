@@ -180,11 +180,12 @@ function UploadForm() {
 }
 
 export function AdminPage() {
-  // Light constant poll while this page is open, so a data source's
-  // pending -> ready/failed transition shows up without a manual refresh.
-  // Stops as soon as the page unmounts - cheap enough not to bother making
-  // conditional on whether anything is actually pending right now.
-  const { data: dataSources = [], isFetching } = useGetDataSourcesQuery(undefined, { pollingInterval: 3000 });
+  // Poll only while a data source is actually mid-ingest, so a
+  // pending -> ready/failed transition shows up without a manual refresh,
+  // and polling goes idle once everything has settled.
+  const { data: dataSources = [], isFetching } = useGetDataSourcesQuery();
+  const hasPending = dataSources.some((ds) => ds.status === "pending");
+  useGetDataSourcesQuery(undefined, { pollingInterval: hasPending ? 3000 : 0 });
 
   return (
     <div className="admin-page">
