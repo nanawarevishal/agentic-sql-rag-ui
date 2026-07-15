@@ -2,9 +2,11 @@ import { useEffect } from "react";
 import { NavLink, Route, Routes } from "react-router-dom";
 import { ChatPage } from "./pages/ChatPage";
 import { AdminPage } from "./pages/AdminPage";
+import { AdminUsagePage } from "./pages/AdminUsagePage";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { LoginPage } from "./features/auth/LoginPage";
 import { ProtectedRoute } from "./features/auth/ProtectedRoute";
+import { AdminRoute } from "./features/auth/AdminRoute";
 import { UserMenu } from "./features/auth/UserMenu";
 import { useRefreshSessionMutation } from "./features/auth/authApi";
 import { authenticating, clearCredentials, setCredentials } from "./features/auth/authSlice";
@@ -39,6 +41,7 @@ function useAuthBootstrap() {
 function App() {
   useAuthBootstrap();
   const isAuthenticated = useAppSelector((state) => state.auth.status === "authenticated");
+  const isAdmin = useAppSelector((state) => state.auth.user?.is_admin ?? false);
 
   return (
     <div className="app-shell">
@@ -62,9 +65,14 @@ function App() {
               <NavLink to="/" end className={({ isActive }) => (isActive ? "active" : "")}>
                 Query
               </NavLink>
-              <NavLink to="/admin" className={({ isActive }) => (isActive ? "active" : "")}>
+              <NavLink to="/admin" end className={({ isActive }) => (isActive ? "active" : "")}>
                 Data Sources
               </NavLink>
+              {isAdmin && (
+                <NavLink to="/admin/usage" className={({ isActive }) => (isActive ? "active" : "")}>
+                  Usage
+                </NavLink>
+              )}
             </nav>
           )}
 
@@ -81,6 +89,9 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<ChatPage />} />
             <Route path="/admin" element={<AdminPage />} />
+            <Route element={<AdminRoute />}>
+              <Route path="/admin/usage" element={<AdminUsagePage />} />
+            </Route>
           </Route>
         </Routes>
       </main>

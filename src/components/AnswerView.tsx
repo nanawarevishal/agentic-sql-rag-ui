@@ -4,6 +4,7 @@ import { detectVisualization, detectMultiSubResultBar } from "../lib/resultVisua
 import { ResultChart } from "./ResultChart";
 import { TrendChart } from "./TrendChart";
 import { StatTile } from "./StatTile";
+import { AnswerExplain } from "./AnswerExplain";
 
 interface Props {
   result: Omit<QueryResponse, "conversation_id">;
@@ -139,6 +140,7 @@ export function AnswerView({ result }: Props) {
           specific about what you're asking, or splitting it into smaller questions.
         </p>
       )}
+      {hasAnswer && <AnswerExplain trace={result.trace} subResults={result.sub_results} />}
       {visualization && singleSubResult?.rows && (
         <>
           {visualization.type === "stat" && (

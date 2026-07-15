@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { RowsTable } from "./TraceDetail";
+import { downloadCsv } from "../lib/csvExport";
 
 interface Props {
   title: string;
@@ -30,6 +31,18 @@ export function ChartCard({ title, rows, children, onExpand }: Props) {
               Table
             </button>
           </div>
+          <button
+            type="button"
+            className="result-chart-export"
+            onClick={() => downloadCsv(title, rows)}
+            disabled={rows.length === 0}
+            aria-label="Export CSV"
+            title="Export CSV"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+            </svg>
+          </button>
           {onExpand && (
             <button type="button" className="result-chart-expand" onClick={onExpand} aria-label="Expand chart" title="Expand chart">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">

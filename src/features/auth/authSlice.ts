@@ -5,6 +5,7 @@ export interface AuthUser {
   email: string;
   display_name: string | null;
   avatar_url: string | null;
+  is_admin: boolean;
 }
 
 // "idle" = bootstrap (App.tsx's silent POST /auth/refresh on mount) hasn't
