@@ -1943,6 +1943,22 @@ pre {
   color: var(--text-muted);
 }
 
+.admin-usage-table {
+  table-layout: fixed;
+}
+
+.admin-usage-table th:first-child,
+.admin-usage-table td:first-child {
+  white-space: normal;
+  word-break: break-word;
+}
+
+.admin-usage-table th:not(:first-child),
+.admin-usage-table td:not(:first-child) {
+  width: 1%;
+  white-space: nowrap;
+}
+
 /* ---------- responsive ---------- */
 
 @media (max-width: 560px) {

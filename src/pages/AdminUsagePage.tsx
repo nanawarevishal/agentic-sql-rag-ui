@@ -95,7 +95,7 @@ export function AdminUsagePage() {
                   {data.top_questions.length === 0 ? (
                     <p className="trace-detail-note">No queries in this window.</p>
                   ) : (
-                    <table className="trace-rows-table">
+                    <table className="trace-rows-table admin-usage-table">
                       <thead>
                         <tr>
                           <th>Question</th>
@@ -119,7 +119,7 @@ export function AdminUsagePage() {
                   {data.per_user.length === 0 ? (
                     <p className="trace-detail-note">No queries in this window.</p>
                   ) : (
-                    <table className="trace-rows-table">
+                    <table className="trace-rows-table admin-usage-table">
                       <thead>
                         <tr>
                           <th>User</th>
