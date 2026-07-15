@@ -1896,17 +1896,38 @@ pre {
   background: var(--accent-soft);
 }
 
+.admin-usage-stat-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem 2rem;
+  margin-bottom: 1.75rem;
+}
+
+.admin-usage-stat-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.admin-usage-group-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
 .admin-usage-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.75rem;
-  margin-bottom: 1.5rem;
 }
 
 .admin-usage-stat {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+  min-width: 108px;
   padding: 0.85rem 1rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -1928,10 +1949,22 @@ pre {
   color: var(--text-primary);
 }
 
-.admin-usage-tables {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
+.admin-usage-stat.is-warning {
+  border-color: color-mix(in srgb, var(--warning) 45%, transparent);
+  background: var(--warning-soft);
+}
+
+.admin-usage-stat.is-warning .admin-usage-stat-value {
+  color: var(--warning);
+}
+
+.admin-usage-stat.is-critical {
+  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+  background: var(--danger-soft);
+}
+
+.admin-usage-stat.is-critical .admin-usage-stat-value {
+  color: var(--danger);
 }
 
 .admin-usage-table-block h3 {
@@ -1941,10 +1974,6 @@ pre {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--text-muted);
-}
-
-.admin-usage-table {
-  table-layout: fixed;
 }
 
 .admin-usage-table th:first-child,
@@ -1957,6 +1986,16 @@ pre {
 .admin-usage-table td:not(:first-child) {
   width: 1%;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-usage-table tbody tr:hover {
+  background: var(--surface-hover);
+}
+
+.admin-usage-error-count {
+  color: var(--danger);
+  font-weight: 600;
 }
 
 /* ---------- responsive ---------- */
