@@ -27,6 +27,7 @@ export default defineConfig({
       '/auth': BACKEND_URL,
       '/conversations': BACKEND_URL,
       '/datasources': BACKEND_URL,
+      '/admin': BACKEND_URL,
     },
   },
 })
