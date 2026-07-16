@@ -6,6 +6,13 @@ import { useRefreshSessionMutation } from "../features/auth/authApi";
 import { clearCredentials, setCredentials } from "../features/auth/authSlice";
 import type { ConversationMessage } from "../features/conversations/conversationsApi";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { useChartFocus } from "./useChartFocus";
+import { combineSubResultRows } from "../lib/resultVisualization";
+
+// A long answer auto-expands the side panel with its full row data even
+// when the prose itself wasn't truncated - past this many rows, "the
+// answer" is really the data, not the paragraph above it.
+const LONG_ANSWER_ROW_THRESHOLD = 15;
 
 // Empty base URL: in dev, Vite's proxy (see vite.config.ts) forwards these
 // paths to the FastAPI backend; in prod, serve the built frontend behind
@@ -18,6 +25,7 @@ export interface ChatTurn {
   trace: TraceEvent[];
   subResults: SubQuestionResult[];
   finalAnswer: string | null;
+  answerTruncated: boolean;
   isStreaming: boolean;
   error: string | null;
 }
@@ -51,6 +59,7 @@ export function useStreamingChat() {
   const dispatch = useAppDispatch();
   const accessToken = useAppSelector((state) => state.auth.accessToken);
   const [refreshSession] = useRefreshSessionMutation();
+  const { focus } = useChartFocus();
 
   const updateTurn = useCallback((id: string, patch: Partial<ChatTurn> | ((t: ChatTurn) => Partial<ChatTurn>)) => {
     setTurns((all) => all.map((t) => (t.id === id ? { ...t, ...(typeof patch === "function" ? patch(t) : patch) } : t)));
@@ -77,6 +86,7 @@ export function useStreamingChat() {
         trace: assistantMessage?.trace ?? [],
         subResults: assistantMessage?.sub_results ?? [],
         finalAnswer: assistantMessage?.content ?? null,
+        answerTruncated: false,
         isStreaming: false,
         error: null,
       });
@@ -95,7 +105,16 @@ export function useStreamingChat() {
       const id = makeId();
       setTurns((all) => [
         ...all,
-        { id, question: request.question, trace: [], subResults: [], finalAnswer: null, isStreaming: true, error: null },
+        {
+          id,
+          question: request.question,
+          trace: [],
+          subResults: [],
+          finalAnswer: null,
+          answerTruncated: false,
+          isStreaming: true,
+          error: null,
+        },
       ]);
 
       const applyLine = (line: StreamLine) => {
@@ -105,9 +124,19 @@ export function useStreamingChat() {
         } else if (line.type === "sub_result") {
           updateTurn(id, (t) => ({ subResults: [...t.subResults, line.result] }));
         } else if (line.type === "final") {
-          updateTurn(id, { finalAnswer: line.final_answer, subResults: line.sub_results, isStreaming: false });
+          updateTurn(id, {
+            finalAnswer: line.final_answer,
+            answerTruncated: line.answer_truncated,
+            subResults: line.sub_results,
+            isStreaming: false,
+          });
           setConversationId(line.conversation_id);
           dispatch(api.util.invalidateTags(["Conversations"]));
+
+          const rows = combineSubResultRows(line.sub_results);
+          if (line.final_answer && (line.answer_truncated || rows.length > LONG_ANSWER_ROW_THRESHOLD)) {
+            focus({ kind: "answer", title: request.question, text: line.final_answer, rows });
+          }
         } else if (line.type === "error") {
           updateTurn(id, { isStreaming: false, error: line.message ?? "The agent run failed" });
         }
@@ -186,7 +215,7 @@ export function useStreamingChat() {
         updateTurn(id, { isStreaming: false, error: message });
       }
     },
-    [accessToken, conversationId, dataSourceId, dispatch, refreshSession, updateTurn]
+    [accessToken, conversationId, dataSourceId, dispatch, focus, refreshSession, updateTurn]
   );
 
   return { turns, ask, conversationId, dataSourceId, setDataSourceId, startNewConversation, loadConversation };

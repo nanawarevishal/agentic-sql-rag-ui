@@ -42,6 +42,9 @@ export interface QueryResponse {
   question: string;
   conversation_id: string;
   final_answer: string | null;
+  // True when the synthesize LLM call hit its token cap - the prose answer
+  // may be cut off mid-sentence even though sub_results' row data is complete.
+  answer_truncated: boolean;
   sub_results: SubQuestionResult[];
   trace: TraceEvent[];
 }
@@ -59,6 +62,7 @@ export type StreamLine =
       question: string;
       conversation_id: string;
       final_answer: string | null;
+      answer_truncated: boolean;
       sub_results: SubQuestionResult[];
     }
   | { type: "error"; message?: string; detail?: unknown };

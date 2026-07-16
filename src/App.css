@@ -244,6 +244,17 @@
   height: 320px;
 }
 
+.answer-focus-panel-body .final-answer {
+  margin-bottom: 1.25rem;
+}
+
+.answer-focus-data-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 0.5rem;
+}
+
 @media (max-width: 860px) {
   .chat-page {
     position: static;

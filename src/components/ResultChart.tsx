@@ -28,7 +28,7 @@ export function ResultChart({ rows, labelKey, valueKey, inPanel }: Props) {
     <ChartCard
       title={title}
       rows={sorted}
-      onExpand={inPanel ? undefined : () => focus({ title, rows: sorted, viz: { type: "bar", labelKey, valueKey } })}
+      onExpand={inPanel ? undefined : () => focus({ kind: "chart", title, rows: sorted, viz: { type: "bar", labelKey, valueKey } })}
     >
       <ul className="result-bars">
         {sorted.map((row, i) => {

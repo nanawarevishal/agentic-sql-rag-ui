@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import type { QueryResponse } from "../types";
-import { detectVisualization, detectMultiSubResultBar } from "../lib/resultVisualization";
+import { detectVisualization, detectMultiSubResultBar, combineSubResultRows } from "../lib/resultVisualization";
 import { ResultChart } from "./ResultChart";
 import { TrendChart } from "./TrendChart";
 import { StatTile } from "./StatTile";
 import { AnswerExplain } from "./AnswerExplain";
+import { useChartFocus } from "../hooks/useChartFocus";
 
 interface Props {
   result: Omit<QueryResponse, "conversation_id">;
@@ -22,7 +23,7 @@ function renderInline(text: string) {
   );
 }
 
-function FormattedAnswer({ text }: { text: string }) {
+export function FormattedAnswer({ text }: { text: string }) {
   const blocks = text.trim().split(/\n{2,}/);
 
   return (
@@ -59,7 +60,7 @@ function FormattedAnswer({ text }: { text: string }) {
   );
 }
 
-function CopyButton({ text }: { text: string }) {
+export function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
 
   return (
@@ -94,6 +95,23 @@ function CopyButton({ text }: { text: string }) {
 // under it) into view once, the same way the trace already does per-step.
 const HEADER_CLEARANCE = 90;
 const DOCK_CLEARANCE = 200;
+
+function ExpandAnswerButton({ title, text, rows }: { title: string; text: string; rows: Array<Record<string, unknown>> }) {
+  const { focus } = useChartFocus();
+  return (
+    <button
+      type="button"
+      className="result-chart-expand"
+      onClick={() => focus({ kind: "answer", title, text, rows })}
+      aria-label="Expand full answer"
+      title="Expand full answer"
+    >
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+      </svg>
+    </button>
+  );
+}
 
 export function AnswerView({ result }: Props) {
   const hasAnswer = Boolean(result.final_answer);
@@ -131,6 +149,13 @@ export function AnswerView({ result }: Props) {
         </span>
         {hasAnswer ? "Answer" : "No answer"}
         {hasAnswer && <CopyButton text={result.final_answer as string} />}
+        {hasAnswer && (
+          <ExpandAnswerButton
+            title={result.question}
+            text={result.final_answer as string}
+            rows={combineSubResultRows(result.sub_results)}
+          />
+        )}
       </div>
       {hasAnswer ? (
         <FormattedAnswer text={result.final_answer as string} />

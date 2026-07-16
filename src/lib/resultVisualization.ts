@@ -125,3 +125,17 @@ export function detectMultiSubResultBar(
 
   return { rows, labelKey: "sub_question", valueKey };
 }
+
+// Flattens every accepted sub-question's rows into one array for the
+// "download full data"/answer-panel feature - a single sub-question's rows
+// pass through unchanged; with more than one, each row is tagged with its
+// originating sub_question so a multi-part answer's CSV still makes sense
+// as one table.
+export function combineSubResultRows(
+  subResults: Array<{ sub_question?: string; rows?: Array<Record<string, unknown>>; accepted?: boolean }>
+): Array<Record<string, unknown>> {
+  const withRows = subResults.filter((r) => r.accepted && r.rows && r.rows.length > 0);
+  if (withRows.length === 0) return [];
+  if (withRows.length === 1) return withRows[0].rows ?? [];
+  return withRows.flatMap((r) => (r.rows ?? []).map((row) => ({ sub_question: r.sub_question ?? "", ...row })));
+}

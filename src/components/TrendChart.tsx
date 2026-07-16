@@ -53,7 +53,7 @@ export function TrendChart({ rows, dateKey, valueKey, inPanel }: Props) {
   const title = `${titleize(valueKey)} over time`;
 
   return (
-    <ChartCard title={title} rows={rows} onExpand={inPanel ? undefined : () => focus({ title, rows, viz: { type: "line", dateKey, valueKey } })}>
+    <ChartCard title={title} rows={rows} onExpand={inPanel ? undefined : () => focus({ kind: "chart", title, rows, viz: { type: "line", dateKey, valueKey } })}>
       <div className="result-line-plot">
         <div className="result-line-canvas">
           <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="result-line-svg">

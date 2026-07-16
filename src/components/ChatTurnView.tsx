@@ -69,6 +69,7 @@ export function ChatTurnView({ turn }: Props) {
               result={{
                 question: turn.question,
                 final_answer: turn.finalAnswer,
+                answer_truncated: turn.answerTruncated,
                 sub_results: turn.subResults,
                 trace: turn.trace,
               }}
