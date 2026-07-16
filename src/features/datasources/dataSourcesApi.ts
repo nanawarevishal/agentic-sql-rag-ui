@@ -1,7 +1,7 @@
 // Mirrors app/api/routers/datasources.py on the backend.
 import { api } from "../../api/apiSlice";
 
-export type DataSourceKind = "connection" | "uploaded" | "builtin";
+export type DataSourceKind = "connection" | "builtin";
 export type DataSourceStatus = "pending" | "ready" | "failed";
 
 export interface DataSource {
@@ -10,7 +10,7 @@ export interface DataSource {
   kind: DataSourceKind;
   status: DataSourceStatus;
   error_message: string | null;
-  schema_source: "introspect" | "uploaded_ddl";
+  schema_source: "introspect";
   created_at: string;
   last_ingested_at: string | null;
 }
@@ -30,13 +30,6 @@ const dataSourcesApi = api.injectEndpoints({
       query: (body) => ({ url: "/datasources", method: "POST", body }),
       invalidatesTags: ["DataSources"],
     }),
-    // FormData body - RTK Query/fetch sets the multipart boundary itself as
-    // long as Content-Type isn't set manually, so this is passed straight
-    // through rather than JSON.stringify'd.
-    uploadDataSource: builder.mutation<DataSource, FormData>({
-      query: (formData) => ({ url: "/datasources/upload", method: "POST", body: formData }),
-      invalidatesTags: ["DataSources"],
-    }),
     deleteDataSource: builder.mutation<{ status: string }, string>({
       query: (id) => ({ url: `/datasources/${id}`, method: "DELETE" }),
       invalidatesTags: ["DataSources"],
@@ -54,7 +47,6 @@ const dataSourcesApi = api.injectEndpoints({
 export const {
   useGetDataSourcesQuery,
   useCreateDataSourceMutation,
-  useUploadDataSourceMutation,
   useDeleteDataSourceMutation,
   useTriggerDataSourceIngestMutation,
   useGetDataSourceStatsQuery,

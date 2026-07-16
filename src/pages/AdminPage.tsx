@@ -6,7 +6,6 @@ import {
   useGetDataSourceStatsQuery,
   useGetDataSourcesQuery,
   useTriggerDataSourceIngestMutation,
-  useUploadDataSourceMutation,
   type DataSource,
 } from "../features/datasources/dataSourcesApi";
 
@@ -117,68 +116,6 @@ function ConnectForm() {
   );
 }
 
-function UploadForm() {
-  const [name, setName] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [notes, setNotes] = useState("");
-  const [uploadDataSource, { isLoading, error }] = useUploadDataSourceMutation();
-
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!file) return;
-    const formData = new FormData();
-    formData.append("name", name);
-    formData.append("dump", file);
-    if (notes.trim()) formData.append("notes", notes);
-    try {
-      await uploadDataSource(formData).unwrap();
-      setName("");
-      setFile(null);
-      setNotes("");
-    } catch {
-      // surfaced via `error` below
-    }
-  };
-
-  return (
-    <form className="ds-form" onSubmit={submit}>
-      <label className="ds-field">
-        <span>Name</span>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="My Uploaded DB" required />
-      </label>
-      <label className="ds-field">
-        <span>Dump file (.sql, plain-text pg_dump --format=plain)</span>
-        <input
-          type="file"
-          accept=".sql"
-          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          required
-        />
-      </label>
-      <label className="ds-field">
-        <span>Table notes (optional)</span>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder={"## table_name\nBusiness context for this table..."}
-          rows={3}
-        />
-      </label>
-      {error && <p className="ds-error">{mutationErrorMessage(error, "Could not upload/restore that dump.")}</p>}
-      <button type="submit" className="btn-primary" disabled={isLoading || !file}>
-        {isLoading ? (
-          <>
-            <span className="spinner" />
-            Uploading &amp; restoring
-          </>
-        ) : (
-          "Upload"
-        )}
-      </button>
-    </form>
-  );
-}
-
 export function AdminPage() {
   // Poll only while a data source is actually mid-ingest, so a
   // pending -> ready/failed transition shows up without a manual refresh,
@@ -221,18 +158,6 @@ export function AdminPage() {
         </div>
         <div className="admin-card-body">
           <ConnectForm />
-        </div>
-      </div>
-
-      <div className="admin-card">
-        <div className="admin-card-header">
-          <div>
-            <h2>Upload a database</h2>
-            <p>Upload a plain-SQL dump - we'll provision a new database and restore it for you.</p>
-          </div>
-        </div>
-        <div className="admin-card-body">
-          <UploadForm />
         </div>
       </div>
     </div>
