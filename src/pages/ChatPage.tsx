@@ -1,26 +1,17 @@
 import { useAppSelector } from "../store/hooks";
-import { useStreamingChat } from "../hooks/useStreamingChat";
+import { useChat } from "../hooks/useChat";
 import { useChartFocus } from "../hooks/useChartFocus";
 import { QueryForm } from "../components/QueryForm";
 import { ChatTurnView } from "../components/ChatTurnView";
 import { ChartFocusPanel } from "../components/ChartFocusPanel";
-import { ChartFocusProvider } from "../components/ChartFocusProvider";
 import { ConversationSidebar } from "../features/conversations/ConversationSidebar";
 import { useLazyGetConversationMessagesQuery, type Conversation } from "../features/conversations/conversationsApi";
 import { DataSourceSelect } from "../features/datasources/DataSourceSelect";
 
 export function ChatPage() {
-  return (
-    <ChartFocusProvider>
-      <ChatPageContent />
-    </ChartFocusProvider>
-  );
-}
-
-function ChatPageContent() {
   const settings = useAppSelector((state) => state.settings);
   const { turns, ask, conversationId, dataSourceId, setDataSourceId, startNewConversation, loadConversation } =
-    useStreamingChat();
+    useChat();
   const { focused } = useChartFocus();
   const [fetchConversationMessages] = useLazyGetConversationMessagesQuery();
 
