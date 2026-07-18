@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { NavLink, Route, Routes } from "react-router-dom";
+import { Navigate, NavLink, Route, Routes } from "react-router-dom";
 import { ChatPage } from "./pages/ChatPage";
 import { AdminPage } from "./pages/AdminPage";
 import { AdminUsagePage } from "./pages/AdminUsagePage";
@@ -65,11 +65,11 @@ function App() {
               <NavLink to="/" end className={({ isActive }) => (isActive ? "active" : "")}>
                 Query
               </NavLink>
-              <NavLink to="/admin" end className={({ isActive }) => (isActive ? "active" : "")}>
+              <NavLink to="/data-sources" className={({ isActive }) => (isActive ? "active" : "")}>
                 Data Sources
               </NavLink>
               {isAdmin && (
-                <NavLink to="/admin/usage" className={({ isActive }) => (isActive ? "active" : "")}>
+                <NavLink to="/usage" className={({ isActive }) => (isActive ? "active" : "")}>
                   Usage
                 </NavLink>
               )}
@@ -88,10 +88,13 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<ChatPage />} />
-            <Route path="/admin" element={<AdminPage />} />
+            <Route path="/data-sources" element={<AdminPage />} />
             <Route element={<AdminRoute />}>
-              <Route path="/admin/usage" element={<AdminUsagePage />} />
+              <Route path="/usage" element={<AdminUsagePage />} />
             </Route>
+            {/* Back-compat: the Data Sources page used to live under /admin. */}
+            <Route path="/admin" element={<Navigate to="/data-sources" replace />} />
+            <Route path="/admin/usage" element={<Navigate to="/usage" replace />} />
           </Route>
         </Routes>
       </main>

@@ -564,6 +564,12 @@
   padding: 0.4rem 0.6rem 0.35rem;
 }
 
+.mode-menu-panel-title ~ .mode-menu-panel-title {
+  margin-top: 0.3rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border);
+}
+
 .mode-menu-item {
   display: flex;
   align-items: center;
@@ -1684,6 +1690,12 @@ pre {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+.answer-explain-summary {
+  margin: 0;
+  color: var(--text-primary);
+  line-height: 1.5;
 }
 
 .answer-explain-section ul {

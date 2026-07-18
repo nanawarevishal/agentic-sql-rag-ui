@@ -70,6 +70,7 @@ export function ChatTurnView({ turn }: Props) {
                 question: turn.question,
                 final_answer: turn.finalAnswer,
                 answer_truncated: turn.answerTruncated,
+                why_explanation: turn.whyExplanation,
                 sub_results: turn.subResults,
                 trace: turn.trace,
               }}

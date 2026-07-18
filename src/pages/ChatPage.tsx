@@ -30,6 +30,8 @@ function ChatPageContent() {
       enable_decomposition: settings.enableDecomposition,
       enable_crag_grading: settings.enableCragGrading,
       enable_self_rag_critique: settings.enableSelfRagCritique,
+      enable_out_of_scope_filter: settings.enableOutOfScopeFilter,
+      enable_static_sql_validation: settings.enableStaticSqlValidation,
     });
   };
 

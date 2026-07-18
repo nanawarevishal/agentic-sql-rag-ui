@@ -165,7 +165,13 @@ export function AnswerView({ result }: Props) {
           specific about what you're asking, or splitting it into smaller questions.
         </p>
       )}
-      {hasAnswer && <AnswerExplain trace={result.trace} subResults={result.sub_results} />}
+      {hasAnswer && (
+        <AnswerExplain
+          whyExplanation={result.why_explanation}
+          trace={result.trace}
+          subResults={result.sub_results}
+        />
+      )}
       {visualization && singleSubResult?.rows && (
         <>
           {visualization.type === "stat" && (

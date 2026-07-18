@@ -13,6 +13,7 @@ export interface ConversationMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
+  why_explanation: string | null;
   trace: TraceEvent[] | null;
   sub_results: SubQuestionResult[] | null;
   created_at: string;

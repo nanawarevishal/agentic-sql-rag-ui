@@ -26,6 +26,7 @@ export interface ChatTurn {
   subResults: SubQuestionResult[];
   finalAnswer: string | null;
   answerTruncated: boolean;
+  whyExplanation: string | null;
   isStreaming: boolean;
   error: string | null;
 }
@@ -87,6 +88,7 @@ export function useStreamingChat() {
         subResults: assistantMessage?.sub_results ?? [],
         finalAnswer: assistantMessage?.content ?? null,
         answerTruncated: false,
+        whyExplanation: assistantMessage?.why_explanation ?? null,
         isStreaming: false,
         error: null,
       });
@@ -112,6 +114,7 @@ export function useStreamingChat() {
           subResults: [],
           finalAnswer: null,
           answerTruncated: false,
+          whyExplanation: null,
           isStreaming: true,
           error: null,
         },
@@ -127,6 +130,7 @@ export function useStreamingChat() {
           updateTurn(id, {
             finalAnswer: line.final_answer,
             answerTruncated: line.answer_truncated,
+            whyExplanation: line.why_explanation,
             subResults: line.sub_results,
             isStreaming: false,
           });

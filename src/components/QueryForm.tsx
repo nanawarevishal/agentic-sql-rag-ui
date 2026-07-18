@@ -7,11 +7,25 @@ interface Props {
   pending: boolean;
 }
 
-const TOGGLES: Array<{ key: keyof SettingsState; label: string; hint: string }> = [
-  { key: "enableDecomposition", label: "Multi-step decomposition", hint: "Split the question into sub-questions" },
-  { key: "enableCragGrading", label: "CRAG relevance grading", hint: "Grade retrieved chunks before use" },
-  { key: "enableSelfRagCritique", label: "Self-RAG critique/retry", hint: "Critique the answer and retry if weak" },
+type ToggleDef = { key: keyof SettingsState; label: string; hint: string; default: boolean };
+
+// Opt-in extras: each one is an additional LLM round-trip, so they default
+// off and the caller pays for them only on request.
+const TOGGLES: ToggleDef[] = [
+  { key: "enableDecomposition", label: "Multi-step decomposition", hint: "Split the question into sub-questions", default: false },
+  { key: "enableCragGrading", label: "CRAG relevance grading", hint: "Grade retrieved chunks before use", default: false },
+  { key: "enableSelfRagCritique", label: "Self-RAG critique/retry", hint: "Critique the answer and retry if weak", default: false },
 ];
+
+// Opt-out safety rails: the backend already defaults these on, so this
+// section is for turning one off (e.g. to see why a question got rejected
+// as out-of-scope), not for enabling it.
+const GUARDS: ToggleDef[] = [
+  { key: "enableOutOfScopeFilter", label: "Out-of-scope filter", hint: "Reject questions unrelated to the schema before running them", default: true },
+  { key: "enableStaticSqlValidation", label: "Static SQL validation", hint: "Validate generated SQL before executing it", default: true },
+];
+
+const ALL_TOGGLES = [...TOGGLES, ...GUARDS];
 
 // Shown once to point first-time users at the reasoning-gate toggles, since
 // they default off and are otherwise easy to miss behind a menu button.
@@ -23,7 +37,7 @@ function SettingsMenu({ disabled }: { disabled: boolean }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const dispatch = useAppDispatch();
   const settings = useAppSelector((state) => state.settings);
-  const activeCount = TOGGLES.filter(({ key }) => settings[key]).length;
+  const activeCount = ALL_TOGGLES.filter(({ key, default: def }) => settings[key] !== def).length;
 
   const dismissHint = () => {
     if (!showHint) return;
@@ -75,6 +89,22 @@ function SettingsMenu({ disabled }: { disabled: boolean }) {
         <div className="mode-menu-panel" role="menu">
           <div className="mode-menu-panel-title">Reasoning gates</div>
           {TOGGLES.map(({ key, label, hint }) => (
+            <label key={key} className="mode-menu-item" role="menuitemcheckbox" aria-checked={settings[key]}>
+              <input type="checkbox" checked={settings[key]} onChange={() => dispatch(toggle(key))} />
+              <span className="mode-menu-item-text">
+                <span className="mode-menu-item-label">{label}</span>
+                <span className="mode-menu-item-hint">{hint}</span>
+              </span>
+              <span className="mode-menu-item-check">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 6 9 17l-5-5" />
+                </svg>
+              </span>
+            </label>
+          ))}
+
+          <div className="mode-menu-panel-title">Safety guards</div>
+          {GUARDS.map(({ key, label, hint }) => (
             <label key={key} className="mode-menu-item" role="menuitemcheckbox" aria-checked={settings[key]}>
               <input type="checkbox" checked={settings[key]} onChange={() => dispatch(toggle(key))} />
               <span className="mode-menu-item-text">

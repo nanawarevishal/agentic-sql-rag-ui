@@ -11,6 +11,23 @@ function detailOf(event: TraceEvent): Record<string, unknown> {
   return event.detail ?? {};
 }
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// retrieve_schema's chunks are RAG candidates picked by embedding similarity,
+// not the tables the generated SQL ended up using - a loan question reliably
+// pulls in neighboring loan-ish tables (e.g. loan_payments, accounts) that
+// never appear in the final query. Reporting the raw candidate list as
+// "looked at" overstates what actually produced the answer, so narrow it
+// down to tables that literally appear (as a whole word) in the executed
+// SQL. Falls back to the full candidate list when there's no SQL yet to
+// check against (e.g. the sub-question errored before generation).
+function tablesActuallyUsed(candidateTables: string[], sql: string | undefined): string[] {
+  if (!sql) return candidateTables;
+  return candidateTables.filter((table) => new RegExp(`\\b${escapeRegExp(table)}\\b`, "i").test(sql));
+}
+
 // Turns the raw trace + sub_results the app already has into short,
 // user-facing sentences - a narrative twin of the dev-facing trace panel,
 // built without any extra API call.
@@ -21,9 +38,10 @@ function buildSectionLines(events: TraceEvent[], subResult: SubQuestionResult | 
   if (retrieveEvent) {
     const chunks =
       (detailOf(retrieveEvent).chunks as Array<{ table_name?: string }> | undefined) ?? [];
-    const tables = Array.from(
+    const candidateTables = Array.from(
       new Set(chunks.map((c) => c.table_name).filter((t): t is string => Boolean(t)))
     );
+    const tables = tablesActuallyUsed(candidateTables, subResult?.sql);
     if (tables.length > 0) {
       lines.push(`Looked at ${tables.length === 1 ? "table" : "tables"}: ${tables.join(", ")}.`);
     }
@@ -32,7 +50,12 @@ function buildSectionLines(events: TraceEvent[], subResult: SubQuestionResult | 
   const retries = subResult?.retries ?? 0;
   if (retries > 0) {
     const rejectionReasons = events
-      .filter((e) => e.node === "grade_relevance" || e.node === "critique")
+      // finalize is the only node that runs a retry decision when Self-RAG
+      // critique is off (its default) - it's also where an execution-error
+      // retry's reason lives even when critique did run, so it must be
+      // included alongside grade_relevance/critique or most retries show
+      // up with no reason at all.
+      .filter((e) => e.node === "grade_relevance" || e.node === "critique" || e.node === "finalize")
       .map((e) => detailOf(e))
       .filter((d) => REJECTING_VERDICTS.has(d.verdict as string))
       .map((d) => d.reason as string | undefined)
