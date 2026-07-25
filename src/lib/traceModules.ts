@@ -17,15 +17,18 @@ interface ModuleRule {
 // classify by keyword instead of hardcoding exact strings - anything that
 // doesn't match a known pipeline stage still gets its own titleized module
 // rather than being dropped.
+// Labels are what a non-technical reader sees in the trace panel, so they
+// describe the *intent* of each stage in plain language - the keys stay as
+// they are because icons and status chips are keyed off them.
 const MODULE_RULES: ModuleRule[] = [
-  { key: "decompose", label: "Decompose question", test: /decompos/i },
-  { key: "retrieve", label: "Retrieve schema context", test: /retriev|schema|context|embed/i },
-  { key: "grade", label: "Grade relevance", test: /grad|crag|relevan/i },
-  { key: "critique", label: "Self-critique", test: /critiqu|self.?rag|reflect/i },
-  { key: "generate_sql", label: "Generate SQL", test: /generate.?sql|sql.?gen|write.?sql|draft/i },
-  { key: "validate_sql", label: "Validate SQL", test: /validat|lint|static.?sql/i },
-  { key: "execute_sql", label: "Execute SQL", test: /execut|run.?sql|query.?db/i },
-  { key: "synthesize", label: "Synthesize answer", test: /synthes|final.?answer|compose|answer/i },
+  { key: "decompose", label: "Break the question down", test: /decompos/i },
+  { key: "retrieve", label: "Find the relevant tables", test: /retriev|schema|context|embed/i },
+  { key: "grade", label: "Check the tables fit the question", test: /grad|crag|relevan/i },
+  { key: "critique", label: "Double-check the answer", test: /critiqu|self.?rag|reflect/i },
+  { key: "generate_sql", label: "Work out what to look up", test: /generate.?sql|sql.?gen|write.?sql|draft/i },
+  { key: "validate_sql", label: "Safety check", test: /validat|lint|static.?sql/i },
+  { key: "execute_sql", label: "Fetch the data", test: /execut|run.?sql|query.?db/i },
+  { key: "synthesize", label: "Write the answer", test: /synthes|final.?answer|compose|answer/i },
 ];
 
 function classify(node: string): { key: string; label: string } {

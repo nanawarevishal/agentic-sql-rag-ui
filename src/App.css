@@ -2277,3 +2277,107 @@ pre {
   color: var(--danger);
   background: var(--danger-soft);
 }
+
+/* ---------- undo toast (UndoToast.tsx) ---------- */
+
+/* Sits above the composer dock (z-index 15) and the sticky header (20) -
+   it's a time-limited offer, so nothing should be able to cover it. */
+.undo-toast {
+  position: fixed;
+  left: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 60;
+  min-width: 260px;
+  max-width: min(360px, calc(100vw - 2.5rem));
+  overflow: hidden;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  animation: fade-in-up 0.18s ease;
+}
+
+.undo-toast-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.85rem;
+}
+
+.undo-toast-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.83rem;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.undo-toast-action {
+  flex: none;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 0.83rem;
+  font-weight: 600;
+  padding: 0.15rem 0.35rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.undo-toast-action:hover {
+  color: var(--accent-hover);
+  background: var(--accent-soft);
+}
+
+/* Drains over exactly the grace window - duration comes from
+   UNDO_GRACE_MS via the --undo-duration custom property. */
+.undo-toast-bar {
+  display: block;
+  height: 2px;
+  background: var(--accent);
+  transform-origin: left center;
+  animation: undo-toast-drain var(--undo-duration, 7000ms) linear forwards;
+}
+
+@keyframes undo-toast-drain {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .undo-toast {
+    animation: none;
+  }
+
+  .undo-toast-bar {
+    animation-name: undo-toast-fade;
+  }
+
+  @keyframes undo-toast-fade {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0.25;
+    }
+  }
+}

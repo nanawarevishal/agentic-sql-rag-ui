@@ -1,4 +1,6 @@
 import { useDeleteConversationMutation, useGetConversationsQuery, type Conversation } from "./conversationsApi";
+import { usePendingDelete } from "../../hooks/usePendingDelete";
+import { UndoToast } from "../../components/UndoToast";
 
 interface Props {
   activeConversationId: string | null;
@@ -19,6 +21,15 @@ function formatRelativeTime(iso: string): string {
 export function ConversationSidebar({ activeConversationId, onSelect, onNewChat, onDeleted }: Props) {
   const { data: conversations = [], isLoading } = useGetConversationsQuery();
   const [deleteConversation] = useDeleteConversationMutation();
+  // Deleting takes one click with no confirm dialog in the way; the undo
+  // window is what makes that safe. onDeleted (which resets the open chat)
+  // fires on commit, not on click, so an undo leaves the turn history alone.
+  const { pending, schedule, undo } = usePendingDelete((id) => deleteConversation(id).unwrap(), {
+    onCommitted: onDeleted,
+    onFailed: () => alert("Failed to delete conversation. Please try again."),
+  });
+
+  const visible = conversations.filter((conversation) => conversation.id !== pending?.id);
 
   return (
     <aside className="conversation-sidebar">
@@ -28,10 +39,10 @@ export function ConversationSidebar({ activeConversationId, onSelect, onNewChat,
 
       <div className="conversation-sidebar-list">
         {isLoading && <p className="conversation-sidebar-empty">Loading...</p>}
-        {!isLoading && conversations.length === 0 && (
+        {!isLoading && visible.length === 0 && (
           <p className="conversation-sidebar-empty">No conversations yet</p>
         )}
-        {conversations.map((conversation) => (
+        {visible.map((conversation) => (
           <div
             key={conversation.id}
             className={`conversation-sidebar-item ${conversation.id === activeConversationId ? "active" : ""}`}
@@ -47,10 +58,10 @@ export function ConversationSidebar({ activeConversationId, onSelect, onNewChat,
               title="Delete conversation"
               onClick={(e) => {
                 e.stopPropagation();
-                deleteConversation(conversation.id)
-                  .unwrap()
-                  .then(() => onDeleted(conversation.id))
-                  .catch(() => alert("Failed to delete conversation. Please try again."));
+                schedule({
+                  id: conversation.id,
+                  label: conversation.title || "Untitled conversation",
+                });
               }}
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -60,6 +71,8 @@ export function ConversationSidebar({ activeConversationId, onSelect, onNewChat,
           </div>
         ))}
       </div>
+
+      {pending && <UndoToast message={`Deleted "${pending.label}"`} onUndo={undo} />}
     </aside>
   );
 }

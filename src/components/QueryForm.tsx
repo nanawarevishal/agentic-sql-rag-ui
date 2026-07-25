@@ -22,7 +22,7 @@ const TOGGLES: ToggleDef[] = [
 // as out-of-scope), not for enabling it.
 const GUARDS: ToggleDef[] = [
   { key: "enableOutOfScopeFilter", label: "Out-of-scope filter", hint: "Reject questions unrelated to the schema before running them", default: true },
-  { key: "enableStaticSqlValidation", label: "Static SQL validation", hint: "Validate generated SQL before executing it", default: true },
+  { key: "enableStaticSqlValidation", label: "Query safety check", hint: "Check the lookup the agent builds before it runs", default: true },
 ];
 
 const ALL_TOGGLES = [...TOGGLES, ...GUARDS];

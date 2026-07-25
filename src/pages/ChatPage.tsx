@@ -50,11 +50,11 @@ export function ChatPage() {
         <div className="chat-scroll">
           {turns.length === 0 && (
             <div className="chat-hero">
-              <span className="chat-hero-eyebrow">Text-to-SQL agent</span>
-              <h1>Ask your database anything</h1>
+              <span className="chat-hero-eyebrow">Data assistant</span>
+              <h1>Ask your data anything</h1>
               <p>
-                Natural-language questions, decomposed and answered over your live schema —
-                with every reasoning step traced.
+                Ask in plain English. Every answer comes back with the numbers behind it and
+                the steps taken to get there.
               </p>
             </div>
           )}

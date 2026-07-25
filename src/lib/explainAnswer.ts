@@ -1,4 +1,5 @@
 import type { SubQuestionResult, TraceEvent } from "../types";
+import { stripSql } from "./redactSql";
 
 export interface ExplainSection {
   subQuestion: string | null;
@@ -65,7 +66,9 @@ function buildSectionLines(events: TraceEvent[], subResult: SubQuestionResult | 
   }
 
   if (subResult?.error) {
-    lines.push(`Failed: ${subResult.error}`);
+    // Driver errors quote the failing statement back at you - not something
+    // to put in the user-facing explanation.
+    lines.push(`Failed: ${stripSql(subResult.error)}`);
   } else if (subResult?.rows) {
     lines.push(`Returned ${subResult.rows.length} row${subResult.rows.length === 1 ? "" : "s"}.`);
   }

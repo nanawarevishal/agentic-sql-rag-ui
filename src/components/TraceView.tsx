@@ -70,10 +70,15 @@ function Module({
               ref={isActive ? activeStepRef : undefined}
               className={`trace-step-row ${isActive && isStreaming ? "is-active" : ""}`}
             >
-              <div className="trace-step-line">
-                <code className="trace-keyword">{event.node}</code>
-                {event.sub_question && <span className="trace-subq">{event.sub_question}</span>}
-              </div>
+              {/* The raw backend node name (generate_sql, execute_sql, ...)
+                  used to lead each step; the module header above already
+                  says the same thing in plain language, so only the
+                  sub-question it belongs to is worth repeating here. */}
+              {event.sub_question && (
+                <div className="trace-step-line">
+                  <span className="trace-subq">{event.sub_question}</span>
+                </div>
+              )}
               <p className="trace-summary">{event.summary}</p>
               {(() => {
                 // TraceDetail returns null when a node's detail has nothing
@@ -145,7 +150,7 @@ export function TraceView({ events, isStreaming }: Props) {
   return (
     <div className={`trace-panel ${collapsed ? "is-collapsed" : ""}`}>
       <div className="trace-panel-header">
-        <span>Agent trace</span>
+        <span>Steps taken</span>
         {isStreaming && <span className="dot-pulse" />}
         {!isStreaming && (
           <button type="button" className="trace-collapse-toggle" onClick={() => setCollapsed((c) => !c)} aria-expanded={!collapsed}>

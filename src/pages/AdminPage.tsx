@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { parseErrorBody } from "../lib/parseErrorBody";
+import { usePendingDelete } from "../hooks/usePendingDelete";
+import { UndoToast } from "../components/UndoToast";
 import {
   useCreateDataSourceMutation,
   useDeleteDataSourceMutation,
@@ -16,8 +18,7 @@ function mutationErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-function DataSourceRow({ dataSource }: { dataSource: DataSource }) {
-  const [deleteDataSource, { isLoading: isDeleting }] = useDeleteDataSourceMutation();
+function DataSourceRow({ dataSource, onDelete }: { dataSource: DataSource; onDelete: () => void }) {
   const [triggerIngest, { isLoading: isIngesting }] = useTriggerDataSourceIngestMutation();
   const [showStats, setShowStats] = useState(false);
   const { data: stats } = useGetDataSourceStatsQuery(dataSource.id, { skip: !showStats });
@@ -54,12 +55,14 @@ function DataSourceRow({ dataSource }: { dataSource: DataSource }) {
           <button
             type="button"
             className="btn-secondary ds-delete"
-            disabled={isDeleting}
             onClick={() => {
-              if (!confirm(`Delete data source "${dataSource.name}"? This can't be undone.`)) return;
-              deleteDataSource(dataSource.id)
-                .unwrap()
-                .catch(() => alert("Failed to delete data source. Please try again."));
+              // Heavier than deleting a conversation - it takes the schema
+              // index with it - so this keeps a confirm on top of the undo
+              // window rather than relying on the undo window alone.
+              const ok = confirm(
+                `Delete data source "${dataSource.name}"? The agent will no longer be able to query it. You'll have a few seconds to undo.`
+              );
+              if (ok) onDelete();
             }}
           >
             Delete
@@ -124,6 +127,18 @@ export function AdminPage() {
   const hasPending = dataSources.some((ds) => ds.status === "pending");
   useGetDataSourcesQuery(undefined, { pollingInterval: hasPending ? 3000 : 0 });
 
+  // Held at page level rather than per row so the list can hide the pending
+  // row and only ever one undo toast is on screen.
+  const [deleteDataSource] = useDeleteDataSourceMutation();
+  const {
+    pending: pendingDelete,
+    schedule: scheduleDelete,
+    undo: undoDelete,
+  } = usePendingDelete((id) => deleteDataSource(id).unwrap(), {
+    onFailed: (item) => alert(`Failed to delete "${item.label}". Please try again.`),
+  });
+  const visibleDataSources = dataSources.filter((ds) => ds.id !== pendingDelete?.id);
+
   return (
     <div className="admin-page">
       <div className="admin-card">
@@ -141,8 +156,12 @@ export function AdminPage() {
             </div>
           ) : (
             <div className="ds-list">
-              {dataSources.map((ds) => (
-                <DataSourceRow key={ds.id} dataSource={ds} />
+              {visibleDataSources.map((ds) => (
+                <DataSourceRow
+                  key={ds.id}
+                  dataSource={ds}
+                  onDelete={() => scheduleDelete({ id: ds.id, label: ds.name })}
+                />
               ))}
             </div>
           )}
@@ -160,6 +179,10 @@ export function AdminPage() {
           <ConnectForm />
         </div>
       </div>
+
+      {pendingDelete && (
+        <UndoToast message={`Deleted "${pendingDelete.label}"`} onUndo={undoDelete} />
+      )}
     </div>
   );
 }

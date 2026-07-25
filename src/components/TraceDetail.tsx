@@ -1,10 +1,15 @@
 import type { TraceEvent } from "../types";
+import { redactSqlDetail, stripSql } from "../lib/redactSql";
 
 // Renders each trace step's `detail` payload the way that node's shape
-// actually reads best, instead of a raw JSON.stringify dump - SQL as code,
-// execute_sql rows as a compact table, retrieve_schema chunks as pills,
-// grade/critique/finalize as a verdict badge + reason. Unrecognized nodes
-// fall back to the raw dump so nothing silently disappears.
+// actually reads best, instead of a raw JSON.stringify dump - execute_sql
+// rows as a compact table, retrieve_schema chunks as pills, grade/critique/
+// finalize as a verdict badge + reason. Unrecognized nodes fall back to the
+// raw dump so nothing silently disappears.
+//
+// The generated query itself is never rendered - the rows it returned are
+// the part a non-technical reader can use, and the SQL is what makes this
+// panel look like a debugger. See lib/redactSql.ts.
 
 type Row = Record<string, unknown>;
 
@@ -95,24 +100,24 @@ export function TraceDetail({ event }: { event: TraceEvent }) {
     }
 
     case "generate_sql": {
-      const sql = d.sql as string | undefined;
       const explanation = d.explanation as string | undefined;
-      return (
-        <div>
-          {explanation && <p className="trace-detail-note">{explanation}</p>}
-          {sql && <pre className="sql-block">{sql}</pre>}
-        </div>
-      );
+      // Without the query there's nothing left to show unless the backend
+      // wrote a plain-language explanation of what it's about to look up.
+      if (!explanation) return null;
+      return <p className="trace-detail-note">{stripSql(explanation)}</p>;
     }
 
     case "execute_sql": {
-      const sql = d.sql as string | undefined;
       const error = d.error as string | null | undefined;
       const rows = d.rows as Row[] | null | undefined;
+      if (!error && !rows) return null;
       return (
         <div>
-          {sql && <pre className="sql-block">{sql}</pre>}
-          {error ? <p className="trace-error-text">{error}</p> : rows && <RowsTable rows={rows} />}
+          {error ? (
+            <p className="trace-error-text">{stripSql(error)}</p>
+          ) : (
+            rows && <RowsTable rows={rows} />
+          )}
         </div>
       );
     }
@@ -129,7 +134,10 @@ export function TraceDetail({ event }: { event: TraceEvent }) {
       );
     }
 
-    default:
-      return <pre>{JSON.stringify(d, null, 2)}</pre>;
+    default: {
+      const safe = redactSqlDetail(d) as Record<string, unknown>;
+      if (Object.keys(safe).length === 0) return null;
+      return <pre>{JSON.stringify(safe, null, 2)}</pre>;
+    }
   }
 }
