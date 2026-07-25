@@ -38,10 +38,20 @@ export interface SubQuestionResult {
   [key: string]: unknown;
 }
 
+// How a turn resolved, independent of final_answer's prose. "answered" =
+// final_answer is the answer; "needs_clarification" = it's a question back
+// to the user (reply on the same conversation_id); "declined" = the agent
+// can't answer at all and no reply changes that.
+export type Resolution = "answered" | "needs_clarification" | "declined";
+
 export interface QueryResponse {
   question: string;
   conversation_id: string;
   final_answer: string | null;
+  resolution: Resolution;
+  // grade_relevance verdicts behind a non-"answered" resolution
+  // ("ambiguous" / "future_scope" / "insufficient"). Empty when answered.
+  resolution_verdicts: string[];
   // True when the synthesize LLM call hit its token cap - the prose answer
   // may be cut off mid-sentence even though sub_results' row data is complete.
   answer_truncated: boolean;
@@ -67,6 +77,8 @@ export type StreamLine =
       question: string;
       conversation_id: string;
       final_answer: string | null;
+      resolution: Resolution;
+      resolution_verdicts: string[];
       answer_truncated: boolean;
       why_explanation: string | null;
       sub_results: SubQuestionResult[];
