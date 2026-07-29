@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Navigate, NavLink, Route, Routes } from "react-router-dom";
 import { ChatPage } from "./pages/ChatPage";
-import { AdminPage } from "./pages/AdminPage";
+import { ProjectsPage } from "./pages/ProjectsPage";
 import { AdminUsagePage } from "./pages/AdminUsagePage";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { LoginPage } from "./features/auth/LoginPage";
@@ -65,8 +65,8 @@ function App() {
               <NavLink to="/" end className={({ isActive }) => (isActive ? "active" : "")}>
                 Query
               </NavLink>
-              <NavLink to="/data-sources" className={({ isActive }) => (isActive ? "active" : "")}>
-                Data Sources
+              <NavLink to="/projects" className={({ isActive }) => (isActive ? "active" : "")}>
+                Projects
               </NavLink>
               {isAdmin && (
                 <NavLink to="/usage" className={({ isActive }) => (isActive ? "active" : "")}>
@@ -88,12 +88,14 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<ChatPage />} />
-            <Route path="/data-sources" element={<AdminPage />} />
+            <Route path="/projects" element={<ProjectsPage />} />
             <Route element={<AdminRoute />}>
               <Route path="/usage" element={<AdminUsagePage />} />
             </Route>
-            {/* Back-compat: the Data Sources page used to live under /admin. */}
-            <Route path="/admin" element={<Navigate to="/data-sources" replace />} />
+            {/* Back-compat: this page was /admin, then /data-sources, before
+                data sources became one kind of project. */}
+            <Route path="/admin" element={<Navigate to="/projects" replace />} />
+            <Route path="/data-sources" element={<Navigate to="/projects" replace />} />
             <Route path="/admin/usage" element={<Navigate to="/usage" replace />} />
           </Route>
         </Routes>

@@ -6,11 +6,11 @@ import { ChatTurnView } from "../components/ChatTurnView";
 import { ChartFocusPanel } from "../components/ChartFocusPanel";
 import { ConversationSidebar } from "../features/conversations/ConversationSidebar";
 import { useLazyGetConversationMessagesQuery, type Conversation } from "../features/conversations/conversationsApi";
-import { DataSourceSelect } from "../features/datasources/DataSourceSelect";
+import { ProjectSelect } from "../features/projects/ProjectSelect";
 
 export function ChatPage() {
   const settings = useAppSelector((state) => state.settings);
-  const { turns, ask, conversationId, dataSourceId, setDataSourceId, startNewConversation, loadConversation } =
+  const { turns, ask, conversationId, projectId, setProjectId, startNewConversation, loadConversation } =
     useChat();
   const { focused } = useChartFocus();
   const [fetchConversationMessages] = useLazyGetConversationMessagesQuery();
@@ -28,7 +28,7 @@ export function ChatPage() {
 
   const handleSelectConversation = async (conversation: Conversation) => {
     const messages = await fetchConversationMessages(conversation.id).unwrap();
-    loadConversation(conversation.id, conversation.data_source_id, messages);
+    loadConversation(conversation.id, conversation.project_id, messages);
   };
 
   const handleConversationDeleted = (deletedId: string) => {
@@ -66,9 +66,9 @@ export function ChatPage() {
 
         <div className="chat-composer-dock">
           <div className="chat-composer-dock-inner">
-            <DataSourceSelect
-              value={dataSourceId}
-              onChange={setDataSourceId}
+            <ProjectSelect
+              value={projectId}
+              onChange={setProjectId}
               disabled={conversationId !== null}
             />
             <QueryForm onSubmit={handleSubmit} pending={pending} />

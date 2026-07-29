@@ -50,12 +50,12 @@ type AskableRequest = Omit<QueryRequest, "stream" | "conversation_id">;
 export function useStreamingChat() {
   const [turns, setTurns] = useState<ChatTurn[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
-  // Which DataSource a NEW conversation will be bound to (see
+  // Which Project a NEW conversation will be bound to (see
   // app/api/routers/query.py::_resolve_conversation) - null means "use the
   // builtin one". Once conversationId is set, the backend ignores this
-  // field anyway (an existing conversation always keeps its own data
-  // source), so ChatPage disables the picker at that point too.
-  const [dataSourceId, setDataSourceId] = useState<string | null>(null);
+  // field anyway (an existing conversation always keeps its own project),
+  // so ChatPage disables the picker at that point too.
+  const [projectId, setProjectId] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const dispatch = useAppDispatch();
   const accessToken = useAppSelector((state) => state.auth.accessToken);
@@ -72,7 +72,7 @@ export function useStreamingChat() {
     setTurns([]);
   }, []);
 
-  const loadConversation = useCallback((id: string, dataSourceId: string | null, messages: ConversationMessage[]) => {
+  const loadConversation = useCallback((id: string, projectId: string | null, messages: ConversationMessage[]) => {
     abortRef.current?.abort();
     const mapped: ChatTurn[] = [];
     // Messages are stored/returned in pairs (user, then assistant) per turn
@@ -94,7 +94,7 @@ export function useStreamingChat() {
       });
     }
     setConversationId(id);
-    setDataSourceId(dataSourceId);
+    setProjectId(projectId);
     setTurns(mapped);
   }, []);
 
@@ -149,7 +149,7 @@ export function useStreamingChat() {
       const requestBody = JSON.stringify({
         ...request,
         conversation_id: conversationId,
-        data_source_id: dataSourceId,
+        project_id: projectId,
         stream: true,
       });
       const doFetch = (token: string | null) =>
@@ -219,8 +219,8 @@ export function useStreamingChat() {
         updateTurn(id, { isStreaming: false, error: message });
       }
     },
-    [accessToken, conversationId, dataSourceId, dispatch, focus, refreshSession, updateTurn]
+    [accessToken, conversationId, projectId, dispatch, focus, refreshSession, updateTurn]
   );
 
-  return { turns, ask, conversationId, dataSourceId, setDataSourceId, startNewConversation, loadConversation };
+  return { turns, ask, conversationId, projectId, setProjectId, startNewConversation, loadConversation };
 }

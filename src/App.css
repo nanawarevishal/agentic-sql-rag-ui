@@ -2381,3 +2381,226 @@ pre {
     }
   }
 }
+
+/* ---------------------------------------------------------------------
+   Projects: the create wizard and its schema-driven fields.
+   The wizard renders whatever fields a project type publishes, so these
+   styles are keyed on field KIND, never on a specific field name.
+   --------------------------------------------------------------------- */
+
+.project-wizard {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 34rem;
+}
+
+.project-wizard-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.project-wizard-header h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.project-wizard-status,
+.project-wizard-error {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.project-wizard-error {
+  color: var(--danger, #dc2626);
+}
+
+.project-wizard-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.project-type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.75rem;
+}
+
+.project-type-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.9rem 1rem;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.project-type-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.project-type-label {
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.project-type-description {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.project-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+}
+
+/* Checkboxes read as "box then label", not "label above box". */
+.project-field-inline {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.project-field-inline > span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.project-field-label {
+  font-weight: 500;
+}
+
+.project-field-required {
+  color: var(--danger, #dc2626);
+}
+
+.project-field-help {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.project-field input[type="text"],
+.project-field input[type="password"],
+.project-field input[type="number"],
+.project-field select {
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+}
+
+.project-field input:focus,
+.project-field select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* ---------------------------------------------------------------------
+   Citations behind a document answer.
+   --------------------------------------------------------------------- */
+
+.citation-list {
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border);
+}
+
+.citation-list-title {
+  margin: 0 0 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.citation-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.citation-item {
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-subtle, var(--surface));
+}
+
+.citation-item-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+}
+
+.citation-index {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.citation-source {
+  font-weight: 500;
+}
+
+.citation-modality {
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: var(--border);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+}
+
+.citation-heading {
+  margin: 0.3rem 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.citation-asset {
+  display: block;
+  max-width: 100%;
+  margin-top: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+/* Collapsed by default: a full 512-token excerpt per citation would bury
+   the answer it's supporting. */
+.citation-text {
+  margin: 0.45rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.citation-text.is-expanded {
+  display: block;
+  overflow: visible;
+}

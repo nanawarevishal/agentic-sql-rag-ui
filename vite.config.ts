@@ -26,6 +26,8 @@ export default defineConfig({
       '/info': BACKEND_URL,
       '/auth': BACKEND_URL,
       '/conversations': BACKEND_URL,
+      '/projects': BACKEND_URL,
+      // Pre-rename path, still served by the backend as a deprecated alias.
       '/datasources': BACKEND_URL,
       '/admin': BACKEND_URL,
     },

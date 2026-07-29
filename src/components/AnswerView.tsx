@@ -5,10 +5,15 @@ import { ResultChart } from "./ResultChart";
 import { TrendChart } from "./TrendChart";
 import { StatTile } from "./StatTile";
 import { AnswerExplain } from "./AnswerExplain";
+import { CitationList } from "./CitationList";
 import { useChartFocus } from "../hooks/useChartFocus";
 
 interface Props {
-  result: Omit<QueryResponse, "conversation_id">;
+  // resolution/resolution_verdicts are omitted as well as conversation_id:
+  // ChatTurn doesn't carry them (they arrive on the stream's final line and
+  // aren't kept per turn), and nothing in here reads them. Requiring them
+  // only made this component impossible to call from ChatTurnView.
+  result: Omit<QueryResponse, "conversation_id" | "resolution" | "resolution_verdicts">;
 }
 
 // The SQL behind each sub-question already lives in the trace panel above
@@ -186,6 +191,12 @@ export function AnswerView({ result }: Props) {
         </>
       )}
       {multiBar && <ResultChart rows={multiBar.rows} labelKey={multiBar.labelKey} valueKey={multiBar.valueKey} />}
+      {/* Document answers cite passages instead of returning rows, so the
+          charts above simply find nothing to draw and this renders instead.
+          Both branches are driven by what the sub-results actually contain
+          rather than by the project type, so neither has to know which agent
+          produced the turn. */}
+      <CitationList subResults={result.sub_results} />
     </div>
   );
 }

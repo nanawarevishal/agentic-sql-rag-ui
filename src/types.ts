@@ -6,11 +6,11 @@ export interface QueryRequest {
   // Omit to start a new conversation; pass a prior response's
   // conversation_id to append this turn to it.
   conversation_id?: string | null;
-  // Which DataSource (see src/features/datasources/dataSourcesApi.ts) to
-  // query. Omit to use the builtin one. Only honored when starting a new
+  // Which Project (see src/features/projects/projectsApi.ts) to query.
+  // Omit to use the builtin one. Only honored when starting a new
   // conversation - an existing conversation always keeps querying whatever
-  // data source it was created against.
-  data_source_id?: string | null;
+  // project it was created against.
+  project_id?: string | null;
   enable_out_of_scope_filter?: boolean;
   enable_decomposition?: boolean;
   enable_crag_grading?: boolean;
@@ -28,11 +28,41 @@ export interface TraceEvent {
   sub_question: string | null;
 }
 
+// One grounded excerpt behind a document answer. Present on doc_rag
+// sub-results the same way `rows` is present on sql_rag ones.
+//
+// `modality` and `asset_url` are part of the shape from day one, including
+// on plain text passages where asset_url is null - so a component that
+// switches on modality keeps working unchanged when image passages start
+// arriving (see agentic-doc-rag's README on the multimodal staging).
+export type PassageModality = "text" | "table" | "image";
+
+export interface Passage {
+  chunk_id: string;
+  document: string;
+  document_id?: string;
+  page?: number | null;
+  pages?: number[];
+  headings?: string[];
+  modality: PassageModality;
+  text: string;
+  score?: number;
+  // Served through the backend gateway, not a raw storage URL, so it stays
+  // behind the same auth as everything else.
+  asset_url?: string | null;
+}
+
+// A sub-question's result. The two agents fill in different halves: the SQL
+// agent returns `sql` + `rows`, the document agent returns `passages` +
+// `answer`. Everything else - retries, accepted, the clarification fields -
+// is shared, which is what lets one component tree render both.
 export interface SubQuestionResult {
   sub_question?: string;
   sql?: string;
   retries?: number;
   rows?: Array<Record<string, unknown>>;
+  passages?: Passage[];
+  answer?: string | null;
   error?: string | null;
   accepted?: boolean;
   [key: string]: unknown;

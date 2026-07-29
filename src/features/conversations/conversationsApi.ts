@@ -4,7 +4,7 @@ import type { SubQuestionResult, TraceEvent } from "../../types";
 export interface Conversation {
   id: string;
   title: string | null;
-  data_source_id: string | null;
+  project_id: string | null;
   created_at: string;
   updated_at: string;
 }
