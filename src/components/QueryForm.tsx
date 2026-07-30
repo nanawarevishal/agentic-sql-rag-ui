@@ -5,6 +5,9 @@ import { toggle, type SettingsState } from "../store/settingsSlice";
 interface Props {
   onSubmit: (question: string) => void;
   pending: boolean;
+  // What the selected project actually holds, so the composer doesn't invite
+  // "a question about the database" when the project is a set of documents.
+  placeholder?: string;
 }
 
 type ToggleDef = { key: keyof SettingsState; label: string; hint: string; default: boolean };
@@ -124,7 +127,7 @@ function SettingsMenu({ disabled }: { disabled: boolean }) {
   );
 }
 
-export function QueryForm({ onSubmit, pending }: Props) {
+export function QueryForm({ onSubmit, pending, placeholder }: Props) {
   const [question, setQuestion] = useState("");
 
   const submit = () => {
@@ -145,7 +148,7 @@ export function QueryForm({ onSubmit, pending }: Props) {
         <textarea
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
-          placeholder={pending ? "Waiting for the agent to finish..." : "Ask a question about the database..."}
+          placeholder={pending ? "Waiting for the agent to finish..." : placeholder ?? "Ask a question..."}
           rows={2}
           onKeyDown={(e) => {
             if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {

@@ -7,6 +7,7 @@ import { ChartFocusPanel } from "../components/ChartFocusPanel";
 import { ConversationSidebar } from "../features/conversations/ConversationSidebar";
 import { useLazyGetConversationMessagesQuery, type Conversation } from "../features/conversations/conversationsApi";
 import { ProjectSelect } from "../features/projects/ProjectSelect";
+import { useGetProjectsQuery } from "../features/projects/projectsApi";
 
 export function ChatPage() {
   const settings = useAppSelector((state) => state.settings);
@@ -14,6 +15,12 @@ export function ChatPage() {
     useChat();
   const { focused } = useChartFocus();
   const [fetchConversationMessages] = useLazyGetConversationMessagesQuery();
+  const { data: projects = [] } = useGetProjectsQuery();
+  const activeProject = projects.find((p) => p.id === projectId);
+  const composerPlaceholder =
+    activeProject?.type === "doc_rag"
+      ? `Ask a question about ${activeProject.name}...`
+      : "Ask a question about the database...";
 
   const handleSubmit = (question: string) => {
     ask({
@@ -71,7 +78,7 @@ export function ChatPage() {
               onChange={setProjectId}
               disabled={conversationId !== null}
             />
-            <QueryForm onSubmit={handleSubmit} pending={pending} />
+            <QueryForm onSubmit={handleSubmit} pending={pending} placeholder={composerPlaceholder} />
           </div>
         </div>
       </div>

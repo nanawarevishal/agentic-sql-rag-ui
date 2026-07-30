@@ -26,10 +26,23 @@ export default defineConfig({
       '/info': BACKEND_URL,
       '/auth': BACKEND_URL,
       '/conversations': BACKEND_URL,
-      '/projects': BACKEND_URL,
+      // /projects and /admin are BOTH client-side routes and API paths, so a
+      // plain proxy entry sends the browser the API's JSON instead of the app
+      // when you navigate to or reload that page. Bypassing document requests
+      // keeps both: a navigation (Accept: text/html) falls through to the SPA,
+      // while fetch/XHR (Accept: application/json) still proxies to the API.
+      '/projects': { target: BACKEND_URL, bypass: serveAppForNavigations },
+      '/admin': { target: BACKEND_URL, bypass: serveAppForNavigations },
       // Pre-rename path, still served by the backend as a deprecated alias.
+      // No collision: the client-side route is /projects, not /datasources.
       '/datasources': BACKEND_URL,
-      '/admin': BACKEND_URL,
     },
   },
 })
+
+// Returning a path serves that file instead of proxying; returning undefined
+// proxies as normal.
+function serveAppForNavigations(req: { headers: Record<string, string | string[] | undefined> }) {
+  const accept = String(req.headers.accept ?? '')
+  return accept.includes('text/html') ? '/index.html' : undefined
+}

@@ -127,15 +127,14 @@ export function ProjectsPage() {
         </div>
       </div>
 
+      {/* Rendered as a modal rather than a card appended below the list: as a
+          card it sat off-screen under a full list, and the list stayed in
+          view competing with the form for attention. */}
       {showWizard && (
-        <div className="admin-card">
-          <div className="admin-card-body">
-            <CreateProjectWizard
-              onCreated={() => setShowWizard(false)}
-              onCancel={() => setShowWizard(false)}
-            />
-          </div>
-        </div>
+        <CreateProjectWizard
+          onCreated={() => setShowWizard(false)}
+          onCancel={() => setShowWizard(false)}
+        />
       )}
 
       {pendingDelete && (

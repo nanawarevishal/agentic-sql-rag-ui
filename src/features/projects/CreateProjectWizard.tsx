@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { parseErrorBody } from "../../lib/parseErrorBody";
+import { FileDropzone } from "./FileDropzone";
 import { ProjectFieldInput } from "./ProjectFieldInput";
+import { ProjectTypeIcon } from "./ProjectTypeIcon";
 import { defaultConfigFor, missingRequiredFields } from "./projectConfig";
 import {
   useCreateProjectMutation,
@@ -17,13 +19,11 @@ interface Props {
 
 type Step = "type" | "config";
 
-// Create a project in two steps: pick a type, then fill in the form that
-// type published. Nothing here knows what a SQL project or a document
-// project actually needs - GET /projects/types says, and this renders it.
-//
-// The upload step is likewise driven by `supports_upload` rather than by
-// checking for type === "doc_rag", so a future type that takes files gets it
-// without a change here.
+// Create a project in two steps: pick a type, then fill in the form that type
+// published. Nothing here knows what a SQL project or a document project
+// actually needs - GET /projects/types says, and this renders it. The upload
+// step keys off `supports_upload` rather than the type name, for the same
+// reason.
 export function CreateProjectWizard({ onCreated, onCancel }: Props) {
   const { data: types = [], isLoading, error: typesError } = useGetProjectTypesQuery();
   const [createProject, { isLoading: isCreating }] = useCreateProjectMutation();
@@ -36,13 +36,32 @@ export function CreateProjectWizard({ onCreated, onCancel }: Props) {
   const [config, setConfig] = useState<Record<string, unknown>>({});
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
+  // Validation stays quiet until a submit is attempted - flagging a required
+  // field the moment the dialog opens scolds the user for not having typed
+  // anything yet.
+  const [submitted, setSubmitted] = useState(false);
 
-  // Skip the type step entirely when only one type is installed - making
-  // someone "choose" from a list of one is pure ceremony.
+  const busy = isCreating || isUploading;
+
+  // Escape closes the dialog, and the page behind it doesn't scroll while
+  // it's open - both are baseline expectations of a modal.
   useEffect(() => {
-    if (types.length === 1 && !selectedType) {
-      chooseType(types[0]);
-    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !busy) onCancel();
+    };
+    document.addEventListener("keydown", onKey);
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previous;
+    };
+  }, [onCancel, busy]);
+
+  // Skip the type step when only one type is installed - making someone
+  // "choose" from a list of one is pure ceremony.
+  useEffect(() => {
+    if (types.length === 1 && !selectedType) chooseType(types[0]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [types]);
 
@@ -50,35 +69,28 @@ export function CreateProjectWizard({ onCreated, onCancel }: Props) {
     () => (selectedType ? missingRequiredFields(selectedType.fields, config) : []),
     [selectedType, config]
   );
+  const oversized = useMemo(
+    () => files.some((f) => selectedType?.max_upload_bytes && f.size > selectedType.max_upload_bytes),
+    [files, selectedType]
+  );
 
   function chooseType(descriptor: ProjectTypeDescriptor) {
     setSelectedType(descriptor);
     setConfig(defaultConfigFor(descriptor.fields));
     setError(null);
+    setSubmitted(false);
     setStep("config");
-  }
-
-  function updateField(fieldName: string, value: unknown) {
-    setConfig((current) => ({ ...current, [fieldName]: value }));
   }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (!selectedType) return;
-
+    setSubmitted(true);
     setError(null);
-    if (!name.trim()) {
-      setError("Give the project a name.");
-      return;
-    }
-    if (missing.length > 0) {
-      setError(`Fill in: ${missing.join(", ")}`);
-      return;
-    }
-    if (selectedType.supports_upload && files.length === 0) {
-      setError("Add at least one document.");
-      return;
-    }
+
+    if (!name.trim() || missing.length > 0) return;
+    if (selectedType.supports_upload && files.length === 0) return;
+    if (oversized) return;
 
     try {
       const project = await createProject({
@@ -89,12 +101,15 @@ export function CreateProjectWizard({ onCreated, onCancel }: Props) {
 
       // Upload THEN ingest, in that order: ingest builds the index from
       // whatever documents exist at that moment, so triggering it first
-      // would index an empty project and report ready.
+      // would index an empty project and report it ready.
       if (selectedType.supports_upload && files.length > 0) {
         const result = await uploadDocuments({ id: project.id, files }).unwrap();
         if (result.accepted.length === 0) {
-          const reasons = result.skipped.map((s) => `${s.filename}: ${s.reason}`).join("; ");
-          setError(`No documents were accepted. ${reasons}`);
+          setError(
+            `No documents were accepted. ${result.skipped
+              .map((s) => `${s.filename}: ${s.reason}`)
+              .join("; ")}`
+          );
           return;
         }
         await triggerIngest(project.id).unwrap();
@@ -106,114 +121,146 @@ export function CreateProjectWizard({ onCreated, onCancel }: Props) {
     }
   }
 
-  if (isLoading) return <p className="project-wizard-status">Loading project types…</p>;
-
-  if (typesError || types.length === 0) {
-    return (
-      <div className="project-wizard">
-        <p className="project-wizard-error">
-          No project types are available. Check that the backend is reachable.
-        </p>
-        <button type="button" onClick={onCancel}>
-          Close
-        </button>
-      </div>
-    );
-  }
-
-  if (step === "type" || !selectedType) {
-    return (
-      <div className="project-wizard">
-        <h3>What kind of project?</h3>
-        <div className="project-type-grid">
-          {types.map((descriptor) => (
-            <button
-              key={descriptor.type}
-              type="button"
-              className="project-type-card"
-              onClick={() => chooseType(descriptor)}
-            >
-              <span className="project-type-label">{descriptor.label}</span>
-              <span className="project-type-description">{descriptor.description}</span>
-            </button>
-          ))}
-        </div>
-        <button type="button" className="link-button" onClick={onCancel}>
-          Cancel
-        </button>
-      </div>
-    );
-  }
-
-  const busy = isCreating || isUploading;
+  const nameInvalid = submitted && !name.trim();
+  const filesInvalid = submitted && selectedType?.supports_upload && files.length === 0;
 
   return (
-    <form className="project-wizard" onSubmit={handleSubmit}>
-      <div className="project-wizard-header">
-        <h3>New {selectedType.label} project</h3>
-        {types.length > 1 && (
-          <button type="button" className="link-button" onClick={() => setStep("type")}>
-            Change type
+    <div
+      className="modal-backdrop"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget && !busy) onCancel();
+      }}
+    >
+      <div className="modal" role="dialog" aria-modal="true" aria-label="New project">
+        <header className="modal-header">
+          <div>
+            <h3>New project</h3>
+            <p>{step === "type" ? "What should it answer from?" : selectedType?.description}</p>
+          </div>
+          <button type="button" className="modal-close" onClick={onCancel} disabled={busy} aria-label="Close">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
           </button>
+        </header>
+
+        {/* Only meaningful when there is a genuine choice to make. */}
+        {types.length > 1 && (
+          <ol className="stepper">
+            <li className={step === "type" ? "is-current" : "is-done"}>
+              <span className="stepper-dot">1</span> Type
+            </li>
+            <li className={step === "config" ? "is-current" : ""}>
+              <span className="stepper-dot">2</span> Details
+            </li>
+          </ol>
+        )}
+
+        <div className="modal-body">
+          {isLoading && <p className="project-wizard-status">Loading project types…</p>}
+
+          {!isLoading && (typesError || types.length === 0) && (
+            <p className="project-wizard-error">
+              No project types are available. Check that the backend is reachable.
+            </p>
+          )}
+
+          {!isLoading && types.length > 0 && step === "type" && (
+            <div className="project-type-grid">
+              {types.map((descriptor) => (
+                <button
+                  key={descriptor.type}
+                  type="button"
+                  className="project-type-card"
+                  onClick={() => chooseType(descriptor)}
+                >
+                  <span className="project-type-icon">
+                    <ProjectTypeIcon name={descriptor.icon} />
+                  </span>
+                  <span className="project-type-label">{descriptor.label}</span>
+                  <span className="project-type-description">{descriptor.description}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {!isLoading && selectedType && step === "config" && (
+            <form id="create-project-form" className="project-form" onSubmit={handleSubmit}>
+              <label className={`project-field ${nameInvalid ? "is-invalid" : ""}`} htmlFor="project-name">
+                <span className="project-field-label">
+                  Name<span className="project-field-required"> *</span>
+                </span>
+                <input
+                  id="project-name"
+                  type="text"
+                  value={name}
+                  placeholder="Field operations handbook"
+                  onChange={(e) => setName(e.target.value)}
+                />
+                {nameInvalid && <span className="project-field-error">Give the project a name.</span>}
+              </label>
+
+              {selectedType.fields.map((field) => (
+                <ProjectFieldInput
+                  key={field.name}
+                  field={field}
+                  value={config[field.name]}
+                  invalid={submitted && missing.includes(field.label)}
+                  onChange={(value) => setConfig((c) => ({ ...c, [field.name]: value }))}
+                />
+              ))}
+
+              {selectedType.supports_upload && (
+                <>
+                  <FileDropzone
+                    files={files}
+                    onChange={setFiles}
+                    accept={selectedType.accepted_extensions}
+                    maxBytes={selectedType.max_upload_bytes}
+                  />
+                  {filesInvalid && (
+                    <span className="project-field-error">Add at least one document.</span>
+                  )}
+                </>
+              )}
+
+              {error && <p className="project-wizard-error">{error}</p>}
+            </form>
+          )}
+        </div>
+
+        {!isLoading && selectedType && step === "config" && (
+          <footer className="modal-footer">
+            {types.length > 1 ? (
+              <button type="button" className="link-button" onClick={() => setStep("type")} disabled={busy}>
+                Back
+              </button>
+            ) : (
+              <span />
+            )}
+            <div className="modal-actions">
+              <button type="button" className="btn-secondary" onClick={onCancel} disabled={busy}>
+                Cancel
+              </button>
+              <button type="submit" form="create-project-form" className="btn-primary" disabled={busy}>
+                {isUploading ? (
+                  <>
+                    <span className="spinner" />
+                    Uploading
+                  </>
+                ) : isCreating ? (
+                  <>
+                    <span className="spinner" />
+                    Creating
+                  </>
+                ) : (
+                  "Create project"
+                )}
+              </button>
+            </div>
+          </footer>
         )}
       </div>
-
-      <label className="project-field" htmlFor="project-name">
-        <span className="project-field-label">
-          Name<span className="project-field-required"> *</span>
-        </span>
-        <input
-          id="project-name"
-          value={name}
-          placeholder="Q3 reports"
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-      </label>
-
-      {selectedType.fields.map((field) => (
-        <ProjectFieldInput
-          key={field.name}
-          field={field}
-          value={config[field.name]}
-          onChange={(value) => updateField(field.name, value)}
-        />
-      ))}
-
-      {selectedType.supports_upload && (
-        <label className="project-field" htmlFor="project-files">
-          <span className="project-field-label">
-            Documents<span className="project-field-required"> *</span>
-          </span>
-          <input
-            id="project-files"
-            type="file"
-            multiple
-            accept={selectedType.accepted_extensions?.join(",")}
-            onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
-          />
-          <span className="project-field-help">
-            {selectedType.accepted_extensions?.join(", ")}
-            {selectedType.max_upload_bytes
-              ? ` · up to ${Math.round(selectedType.max_upload_bytes / 1024 / 1024)} MB each`
-              : ""}
-          </span>
-          {files.length > 0 && (
-            <span className="project-field-help">{files.length} file(s) selected</span>
-          )}
-        </label>
-      )}
-
-      {error && <p className="project-wizard-error">{error}</p>}
-
-      <div className="project-wizard-actions">
-        <button type="submit" disabled={busy}>
-          {isUploading ? "Uploading…" : isCreating ? "Creating…" : "Create project"}
-        </button>
-        <button type="button" className="link-button" onClick={onCancel} disabled={busy}>
-          Cancel
-        </button>
-      </div>
-    </form>
+    </div>
   );
 }
