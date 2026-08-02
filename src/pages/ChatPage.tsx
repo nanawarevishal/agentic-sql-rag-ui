@@ -79,7 +79,7 @@ export function ChatPage() {
           )}
 
           {turns.map((turn) => (
-            <ChatTurnView key={turn.id} turn={turn} />
+            <ChatTurnView key={turn.id} turn={turn} projectType={activeProject?.type} />
           ))}
         </div>
 

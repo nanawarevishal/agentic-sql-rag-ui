@@ -1,16 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import type { TraceEvent } from "../types";
-import { groupIntoModules, moduleStatus, type TraceModule } from "../lib/traceModules";
+import { groupIntoModules, moduleStatus, type ProjectKind, type TraceModule } from "../lib/traceModules";
 import { TraceDetail } from "./TraceDetail";
 
 interface Props {
   events: TraceEvent[];
   isStreaming: boolean;
+  // Decides the wording of the shared pipeline stages - see traceModules.
+  projectType?: ProjectKind;
 }
 
 const MODULE_ICON_PATHS: Record<string, string> = {
+  contextualize: "M21 15a2 2 0 0 1-2 2H8l-4 4V6a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z",
   decompose: "M12 3v6M12 15v6M12 9l-6 3 6 3M12 9l6 3-6 3",
   retrieve: "M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM21 21l-4.35-4.35",
+  rerank: "M7 21V5M3 9l4-4 4 4M17 3v16M13 15l4 4 4-4",
+  trim: "M6 3v12M18 3v12M6 15a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM18 15a3 3 0 1 0 0 6 3 3 0 0 0 0-6z",
+  draft_answer: "M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z",
+  clarify: "M9.1 9a3 3 0 1 1 4 2.8c-.8.3-1.1 1-1.1 1.7v.5M12 17h.01",
   grade: "M4 6h16M4 12h10M4 18h6M17 15l3 3 3-3",
   critique: "M4 4v6h6M20 20v-6h-6M4 10a8 8 0 0 1 14.5-4.5M20 14a8 8 0 0 1-14.5 4.5",
   generate_sql: "M8 4 3 12l5 8M16 4l5 8-5 8M13 4l-2 16",
@@ -110,7 +117,7 @@ function Module({
 const HEADER_CLEARANCE = 90;
 const DOCK_CLEARANCE = 200;
 
-export function TraceView({ events, isStreaming }: Props) {
+export function TraceView({ events, isStreaming, projectType }: Props) {
   const activeStepRef = useRef<HTMLLIElement | null>(null);
   const listRef = useRef<HTMLOListElement | null>(null);
   const [collapsed, setCollapsed] = useState(false);
@@ -145,7 +152,7 @@ export function TraceView({ events, isStreaming }: Props) {
 
   if (events.length === 0) return null;
 
-  const modules = groupIntoModules(events);
+  const modules = groupIntoModules(events, projectType);
 
   return (
     <div className={`trace-panel ${collapsed ? "is-collapsed" : ""}`}>

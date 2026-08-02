@@ -2904,6 +2904,81 @@ pre {
   border-radius: var(--radius-sm);
 }
 
+/* Artifacts are fetched with the session's auth header and swapped in as an
+   object URL, so there is a gap between mount and pixels. Reserving a box
+   keeps the citation list from reflowing as each figure lands. */
+.citation-asset-placeholder {
+  margin-top: 0.55rem;
+  height: 96px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.citation-asset-error {
+  margin: 0.55rem 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* A cited source whose excerpt didn't come back with this turn. Styled like
+   the other quiet notes rather than the excerpt itself, so it can't be
+   mistaken for the passage text. */
+.citation-text-missing {
+  margin: 0.45rem 0 0;
+  font-size: 0.78rem;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+/* Sits under a decline to explain what the search was limited to. Quieter
+   than the grounding warning: nothing went wrong, the question just scoped
+   itself. */
+.scope-note {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.scope-note strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Trace panel: the search scope line above the retrieved documents. */
+.trace-retrieval-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* The answer is still shown - this only flags that some of it goes beyond
+   the excerpts, so the Sources list below is worth reading. */
+.grounding-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--warning);
+  background: var(--warning-soft);
+  border: 1px solid color-mix(in srgb, var(--warning) 35%, transparent);
+  border-radius: var(--radius-md);
+}
+
+.grounding-warning svg {
+  flex-shrink: 0;
+}
+
 /* Clamped by default: a full 512-token excerpt per citation would bury the
    answer it is supporting. */
 .citation-text {

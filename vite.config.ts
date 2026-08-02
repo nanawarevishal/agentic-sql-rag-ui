@@ -1,4 +1,5 @@
-import { defineConfig } from 'vite'
+// vitest's defineConfig, not vite's - same config plus the `test` key below.
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
@@ -19,6 +20,14 @@ export default defineConfig({
       },
     }),
   ],
+  // Node environment, no jsdom: the logic worth testing here is the pure
+  // functions the components lean on - which trace node maps to which module,
+  // what a filter set means, how citations join to passage text. Rendering
+  // tests would need a DOM and a store, and would mostly assert markup.
+  test: {
+    environment: 'node',
+    include: ['src/**/*.test.ts'],
+  },
   server: {
     proxy: {
       '/query': BACKEND_URL,

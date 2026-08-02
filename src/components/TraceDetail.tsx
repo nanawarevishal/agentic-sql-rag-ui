@@ -1,11 +1,13 @@
 import type { TraceEvent } from "../types";
 import { redactSqlDetail, stripSql } from "../lib/redactSql";
+import { describeFilters, type RetrievalFilters } from "../lib/retrievalFilters";
 
 // Renders each trace step's `detail` payload the way that node's shape
 // actually reads best, instead of a raw JSON.stringify dump - execute_sql
-// rows as a compact table, retrieve_schema chunks as pills, grade/critique/
-// finalize as a verdict badge + reason. Unrecognized nodes fall back to the
-// raw dump so nothing silently disappears.
+// rows as a compact table, retrieve_schema chunks and retrieve_passages
+// documents as pills, grade/critique/finalize as a verdict badge + reason.
+// Unrecognized nodes fall back to the raw dump so nothing silently
+// disappears.
 //
 // The generated query itself is never rendered - the rows it returned are
 // the part a non-technical reader can use, and the SQL is what makes this
@@ -80,6 +82,41 @@ export function TraceDetail({ event }: { event: TraceEvent }) {
               {c.chunk_type && <em>{c.chunk_type}</em>}
             </span>
           ))}
+        </div>
+      );
+    }
+
+    case "retrieve_passages": {
+      const documents = (d.documents as string[] | undefined) ?? [];
+      const filters = d.filters as RetrievalFilters | undefined;
+      // Reported whenever the search differed from the default, including -
+      // especially - when it came back with nothing. An empty passage list
+      // plus a filter is the case where the filter is the explanation.
+      // Whether it differed is the service's verdict, never re-derived here:
+      // exclude_superseded is set on every query, so a client deciding for
+      // itself flags every search as scoped.
+      const restricted = Boolean(d.filters_restricted);
+      const widened = Boolean(d.filters_widened);
+      const scope =
+        filters && (restricted || widened)
+          ? describeFilters({ filters, restricted, widened })
+          : [];
+      if (documents.length === 0 && scope.length === 0) return null;
+
+      return (
+        <div className="trace-retrieval-detail">
+          {scope.length > 0 && (
+            <p className="trace-detail-note">Search scope: {scope.join(" · ")}</p>
+          )}
+          {documents.length > 0 && (
+            <div className="trace-chunk-list">
+              {documents.map((document) => (
+                <span key={document} className="trace-chunk-pill">
+                  {document}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       );
     }

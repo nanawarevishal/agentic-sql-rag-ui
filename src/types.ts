@@ -56,6 +56,32 @@ export interface Passage {
   asset_url?: string | null;
 }
 
+// One resolved `[n]` marker in the final answer.
+//
+// This - NOT the order passages happen to appear in sub_results - is the
+// numbering the prose uses. The document service resolves markers twice
+// (agentic-doc-rag's app/rag/citations.py): once per sub-question, then
+// again across the merged answer, where it drops passages nothing cites,
+// collapses a chunk cited by two sub-questions into one number, and
+// renumbers what survives 1..n. So a Sources list built by indexing
+// passages disagrees with the answer as soon as anything is retrieved but
+// not cited.
+//
+// Deliberately no `text`: the excerpt body stays on the passage in
+// sub_results (joined by chunk_id) so the wire doesn't carry it twice.
+export interface Citation {
+  marker: number;
+  chunk_id: string;
+  document: string;
+  document_id?: string;
+  page?: number | null;
+  pages?: number[];
+  headings?: string[];
+  modality: PassageModality;
+  asset_url?: string | null;
+  score?: number;
+}
+
 // A sub-question's result. The two agents fill in different halves: the SQL
 // agent returns `sql` + `rows`, the document agent returns `passages` +
 // `answer`. Everything else - retries, accepted, the clarification fields -
@@ -69,6 +95,21 @@ export interface SubQuestionResult {
   answer?: string | null;
   error?: string | null;
   accepted?: boolean;
+  // Document sub-results only. `faithfulness` is the share of the answer the
+  // excerpts actually support, and `weakly_grounded` is that score already
+  // judged against the service's FAITHFULNESS_THRESHOLD. Read the flag, not
+  // the score: the threshold is tunable config in the document service, and
+  // comparing against a copy of the number here silently keeps warning by
+  // whatever value was current when this was written. Because a draft below
+  // the threshold is retried, the flag is only true when the retry budget
+  // ran out.
+  //
+  // Absent means UNKNOWN, not "grounded": a SQL sub-result, or a doc turn
+  // stored before the service sent the flag. No warning renders either way,
+  // so a reloaded old turn can't show one - see GroundingWarning.
+  source_confidence?: number | null;
+  faithfulness?: number | null;
+  weakly_grounded?: boolean;
   [key: string]: unknown;
 }
 
@@ -95,6 +136,10 @@ export interface QueryResponse {
   // is unaffected either way.
   why_explanation: string | null;
   sub_results: SubQuestionResult[];
+  // Absent on sql_rag turns, which have no marker numbering at all, and empty
+  // on a document turn whose answer used no markers. The difference decides
+  // whether a Sources list may fall back to passage order - see CitationList.
+  citations?: Citation[];
   trace: TraceEvent[];
 }
 
@@ -116,6 +161,9 @@ export type StreamLine =
       answer_truncated: boolean;
       why_explanation: string | null;
       sub_results: SubQuestionResult[];
+      // Optional on the wire: only the document service sends it, and the
+      // gateway forwards the final line as-is.
+      citations?: Citation[];
     }
   | { type: "error"; message?: string; detail?: unknown };
 

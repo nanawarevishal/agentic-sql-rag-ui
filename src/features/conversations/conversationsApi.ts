@@ -1,5 +1,5 @@
 import { api } from "../../api/apiSlice";
-import type { SubQuestionResult, TraceEvent } from "../../types";
+import type { Citation, Resolution, SubQuestionResult, TraceEvent } from "../../types";
 
 export interface Conversation {
   id: string;
@@ -16,6 +16,17 @@ export interface ConversationMessage {
   why_explanation: string | null;
   trace: TraceEvent[] | null;
   sub_results: SubQuestionResult[] | null;
+  // Null on sql_rag turns and on document turns recorded before the backend
+  // stored citations: no marker numbering exists, so passage order is the
+  // only thing left to render. An empty ARRAY is different - the answer cited
+  // nothing - and must not become a numbered Sources list. See CitationList.
+  citations: Citation[] | null;
+  // Persisted since the same migration. Null only on turns recorded before
+  // it, which is why the reader treats null as "unknown" rather than
+  // "answered" - see useStreamingChat's loadConversation.
+  resolution: Resolution | null;
+  resolution_verdicts: string[] | null;
+  answer_truncated: boolean | null;
   created_at: string;
 }
 

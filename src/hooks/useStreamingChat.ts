@@ -1,9 +1,17 @@
 import { useCallback, useRef, useState } from "react";
-import type { QueryRequest, StreamLine, SubQuestionResult, TraceEvent } from "../types";
+import type {
+  Citation,
+  QueryRequest,
+  Resolution,
+  StreamLine,
+  SubQuestionResult,
+  TraceEvent,
+} from "../types";
 import { parseErrorBody } from "../lib/parseErrorBody";
 import { api } from "../api/apiSlice";
 import { useRefreshSessionMutation } from "../features/auth/authApi";
 import { clearCredentials, setCredentials } from "../features/auth/authSlice";
+import { singleFlightRefresh } from "../features/auth/singleFlightRefresh";
 import type { ConversationMessage } from "../features/conversations/conversationsApi";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { useChartFocus } from "./useChartFocus";
@@ -24,7 +32,21 @@ export interface ChatTurn {
   question: string;
   trace: TraceEvent[];
   subResults: SubQuestionResult[];
+  // Document turns only, and only once the final line lands - the marker
+  // numbering isn't known until the answer that uses it exists.
+  //
+  // undefined and [] are NOT the same: undefined means this turn has no
+  // marker numbering at all (a SQL turn, or one recorded before the backend
+  // stored it) and the Sources list falls back to passage order, while []
+  // means the answer cited nothing and there is no Sources list to show.
+  citations?: Citation[];
   finalAnswer: string | null;
+  // How the turn resolved. Straight from the final line while streaming, and
+  // from the stored column on reload - never re-derived from sub_results
+  // here, which would put a second copy of summarize_resolution's rules in
+  // the frontend to drift. Null only for turns recorded before that column
+  // existed.
+  resolution: Resolution | null;
   answerTruncated: boolean;
   whyExplanation: string | null;
   isStreaming: boolean;
@@ -86,8 +108,13 @@ export function useStreamingChat() {
         question: userMessage.content,
         trace: assistantMessage?.trace ?? [],
         subResults: assistantMessage?.sub_results ?? [],
+        // ?? undefined, not ?? []: the backend stores null for "no numbering
+        // here" and [] for "cited nothing", and collapsing them would make a
+        // reloaded uncited answer grow a Sources list.
+        citations: assistantMessage?.citations ?? undefined,
         finalAnswer: assistantMessage?.content ?? null,
-        answerTruncated: false,
+        resolution: assistantMessage?.resolution ?? null,
+        answerTruncated: assistantMessage?.answer_truncated ?? false,
         whyExplanation: assistantMessage?.why_explanation ?? null,
         isStreaming: false,
         error: null,
@@ -112,7 +139,9 @@ export function useStreamingChat() {
           question: request.question,
           trace: [],
           subResults: [],
+          citations: undefined,
           finalAnswer: null,
+          resolution: null,
           answerTruncated: false,
           whyExplanation: null,
           isStreaming: true,
@@ -132,6 +161,10 @@ export function useStreamingChat() {
             answerTruncated: line.answer_truncated,
             whyExplanation: line.why_explanation,
             subResults: line.sub_results,
+            // Left undefined when the line carries no citations key at all
+            // (the SQL path) - see the field's comment on ChatTurn.
+            citations: line.citations,
+            resolution: line.resolution,
             isStreaming: false,
           });
           setConversationId(line.conversation_id);
@@ -169,7 +202,9 @@ export function useStreamingChat() {
 
         if (res.status === 401) {
           try {
-            const session = await refreshSession().unwrap();
+            // Joins whatever refresh the answer's assets may already have
+            // started, rather than racing it (see singleFlightRefresh).
+            const session = await singleFlightRefresh(() => refreshSession().unwrap());
             dispatch(setCredentials(session));
             res = await doFetch(session.access_token);
           } catch {

@@ -1,10 +1,14 @@
 import { useState } from "react";
 import type { ChatTurn } from "../hooks/useStreamingChat";
+import type { ProjectKind } from "../lib/traceModules";
 import { TraceView } from "./TraceView";
 import { AnswerView } from "./AnswerView";
 
 interface Props {
   turn: ChatTurn;
+  // Which agent produced this turn, so the trace panel can name its stages
+  // in the right vocabulary (passages vs tables).
+  projectType?: ProjectKind;
 }
 
 function TraceToggleButton({ open, onClick }: { open: boolean; onClick: () => void }) {
@@ -23,7 +27,7 @@ function TraceToggleButton({ open, onClick }: { open: boolean; onClick: () => vo
   );
 }
 
-export function ChatTurnView({ turn }: Props) {
+export function ChatTurnView({ turn, projectType }: Props) {
   const isDone = !turn.isStreaming && !turn.error;
   const hasTrace = turn.trace.length > 0;
   const [showTrace, setShowTrace] = useState(false);
@@ -63,7 +67,9 @@ export function ChatTurnView({ turn }: Props) {
 
       {(traceVisible || isDone) && (
         <div className="results">
-          {traceVisible && <TraceView events={turn.trace} isStreaming={turn.isStreaming} />}
+          {traceVisible && (
+            <TraceView events={turn.trace} isStreaming={turn.isStreaming} projectType={projectType} />
+          )}
           {isDone && (
             <AnswerView
               result={{
@@ -72,6 +78,8 @@ export function ChatTurnView({ turn }: Props) {
                 answer_truncated: turn.answerTruncated,
                 why_explanation: turn.whyExplanation,
                 sub_results: turn.subResults,
+                citations: turn.citations,
+                resolution: turn.resolution,
                 trace: turn.trace,
               }}
             />
