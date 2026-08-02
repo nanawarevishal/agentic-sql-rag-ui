@@ -1,4 +1,5 @@
 import { useAppSelector } from "../store/hooks";
+import { DEFAULT_SETTINGS } from "../store/settingsSlice";
 import { useChat } from "../hooks/useChat";
 import { useChartFocus } from "../hooks/useChartFocus";
 import { QueryForm } from "../components/QueryForm";
@@ -17,9 +18,10 @@ export function ChatPage() {
   const [fetchConversationMessages] = useLazyGetConversationMessagesQuery();
   const { data: projects = [] } = useGetProjectsQuery();
   const activeProject = projects.find((p) => p.id === projectId);
+  const isDocProject = activeProject?.type === "doc_rag";
   const composerPlaceholder =
-    activeProject?.type === "doc_rag"
-      ? `Ask a question about ${activeProject.name}...`
+    isDocProject
+      ? `Ask a question about ${activeProject?.name}...`
       : "Ask a question about the database...";
 
   const handleSubmit = (question: string) => {
@@ -30,6 +32,16 @@ export function ChatPage() {
       enable_self_rag_critique: settings.enableSelfRagCritique,
       enable_out_of_scope_filter: settings.enableOutOfScopeFilter,
       enable_static_sql_validation: settings.enableStaticSqlValidation,
+      // Sent only when the user has moved them off the default. These two are
+      // deployment settings on the doc service, so always sending them would
+      // let this UI's defaults quietly override a server configured
+      // otherwise - the backend distinguishes "unset" from "explicitly off".
+      ...(isDocProject && settings.enableHybridSearch !== DEFAULT_SETTINGS.enableHybridSearch
+        ? { enable_hybrid_search: settings.enableHybridSearch }
+        : {}),
+      ...(isDocProject && settings.enableReranking !== DEFAULT_SETTINGS.enableReranking
+        ? { enable_reranking: settings.enableReranking }
+        : {}),
     });
   };
 
@@ -78,7 +90,12 @@ export function ChatPage() {
               onChange={setProjectId}
               disabled={conversationId !== null}
             />
-            <QueryForm onSubmit={handleSubmit} pending={pending} placeholder={composerPlaceholder} />
+            <QueryForm
+              onSubmit={handleSubmit}
+              pending={pending}
+              placeholder={composerPlaceholder}
+              projectType={activeProject?.type}
+            />
           </div>
         </div>
       </div>

@@ -16,6 +16,10 @@ export interface QueryRequest {
   enable_crag_grading?: boolean;
   enable_self_rag_critique?: boolean;
   enable_static_sql_validation?: boolean;
+  // Document projects only. Omitted rather than false when the user hasn't
+  // changed them, so the doc service keeps its configured default.
+  enable_hybrid_search?: boolean;
+  enable_reranking?: boolean;
   stream?: boolean;
 }
 

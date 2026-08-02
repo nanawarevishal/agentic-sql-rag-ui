@@ -12,6 +12,12 @@ export interface SettingsState {
   enableSelfRagCritique: boolean;
   enableOutOfScopeFilter: boolean;
   enableStaticSqlValidation: boolean;
+  // Retrieval shape, document projects only. These two default ON to match
+  // the doc service's own defaults, and are only sent when the user moves
+  // them off that default - otherwise the UI would silently override a
+  // deployment that configured them differently.
+  enableHybridSearch: boolean;
+  enableReranking: boolean;
 }
 
 const initialState: SettingsState = {
@@ -20,7 +26,13 @@ const initialState: SettingsState = {
   enableSelfRagCritique: false,
   enableOutOfScopeFilter: true,
   enableStaticSqlValidation: true,
+  enableHybridSearch: true,
+  enableReranking: true,
 };
+
+// Exported so callers can tell "the user chose this" from "this is just the
+// default" - see ChatPage, which only forwards deviations.
+export const DEFAULT_SETTINGS: SettingsState = initialState;
 
 const settingsSlice = createSlice({
   name: "settings",

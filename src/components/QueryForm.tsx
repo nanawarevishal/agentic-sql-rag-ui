@@ -8,6 +8,10 @@ interface Props {
   // What the selected project actually holds, so the composer doesn't invite
   // "a question about the database" when the project is a set of documents.
   placeholder?: string;
+  // Drives which toggles are worth showing: a document project has no SQL to
+  // validate, and a SQL project has no passages to rerank. Showing a control
+  // that does nothing is worse than hiding it.
+  projectType?: "sql_rag" | "doc_rag";
 }
 
 type ToggleDef = { key: keyof SettingsState; label: string; hint: string; default: boolean };
@@ -28,19 +32,35 @@ const GUARDS: ToggleDef[] = [
   { key: "enableStaticSqlValidation", label: "Query safety check", hint: "Check the lookup the agent builds before it runs", default: true },
 ];
 
-const ALL_TOGGLES = [...TOGGLES, ...GUARDS];
+// Document projects only: these change what retrieval hands the answer step,
+// and have no counterpart in the SQL agent. Both default ON - unlike the
+// reasoning gates above, they are cheap-or-worth-it by default and this
+// section is for turning one OFF (usually to cut latency).
+const RETRIEVAL: ToggleDef[] = [
+  { key: "enableHybridSearch", label: "Hybrid search", hint: "Combine semantic and keyword search", default: true },
+  { key: "enableReranking", label: "Rerank results", hint: "Re-order retrieved passages by relevance", default: true },
+];
+
+// SQL-only: nothing in a document project produces a query to check.
+const SQL_ONLY = new Set<keyof SettingsState>(["enableStaticSqlValidation"]);
+
 
 // Shown once to point first-time users at the reasoning-gate toggles, since
 // they default off and are otherwise easy to miss behind a menu button.
 const HINT_SEEN_KEY = "agentic-sql-rag:seenAgentBehaviorMenu";
 
-function SettingsMenu({ disabled }: { disabled: boolean }) {
+function SettingsMenu({ disabled, projectType }: { disabled: boolean; projectType?: "sql_rag" | "doc_rag" }) {
   const [open, setOpen] = useState(false);
   const [showHint, setShowHint] = useState(() => localStorage.getItem(HINT_SEEN_KEY) !== "1");
   const rootRef = useRef<HTMLDivElement>(null);
   const dispatch = useAppDispatch();
   const settings = useAppSelector((state) => state.settings);
-  const activeCount = ALL_TOGGLES.filter(({ key, default: def }) => settings[key] !== def).length;
+  const isDoc = projectType === "doc_rag";
+  const guards = GUARDS.filter(({ key }) => !isDoc || !SQL_ONLY.has(key));
+  const visible = isDoc ? [...TOGGLES, ...guards, ...RETRIEVAL] : [...TOGGLES, ...guards];
+  // Counts only what's on screen, so the badge can't advertise a change the
+  // user has no control to see.
+  const activeCount = visible.filter(({ key, default: def }) => settings[key] !== def).length;
 
   const dismissHint = () => {
     if (!showHint) return;
@@ -106,8 +126,28 @@ function SettingsMenu({ disabled }: { disabled: boolean }) {
             </label>
           ))}
 
+          {isDoc && (
+            <>
+              <div className="mode-menu-panel-title">Retrieval</div>
+              {RETRIEVAL.map(({ key, label, hint }) => (
+                <label key={key} className="mode-menu-item" role="menuitemcheckbox" aria-checked={settings[key]}>
+                  <input type="checkbox" checked={settings[key]} onChange={() => dispatch(toggle(key))} />
+                  <span className="mode-menu-item-text">
+                    <span className="mode-menu-item-label">{label}</span>
+                    <span className="mode-menu-item-hint">{hint}</span>
+                  </span>
+                  <span className="mode-menu-item-check">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg>
+                  </span>
+                </label>
+              ))}
+            </>
+          )}
+
           <div className="mode-menu-panel-title">Safety guards</div>
-          {GUARDS.map(({ key, label, hint }) => (
+          {guards.map(({ key, label, hint }) => (
             <label key={key} className="mode-menu-item" role="menuitemcheckbox" aria-checked={settings[key]}>
               <input type="checkbox" checked={settings[key]} onChange={() => dispatch(toggle(key))} />
               <span className="mode-menu-item-text">
@@ -127,7 +167,7 @@ function SettingsMenu({ disabled }: { disabled: boolean }) {
   );
 }
 
-export function QueryForm({ onSubmit, pending, placeholder }: Props) {
+export function QueryForm({ onSubmit, pending, placeholder, projectType }: Props) {
   const [question, setQuestion] = useState("");
 
   const submit = () => {
@@ -158,7 +198,7 @@ export function QueryForm({ onSubmit, pending, placeholder }: Props) {
           }}
         />
         <div className="query-composer-footer">
-          <SettingsMenu disabled={pending} />
+          <SettingsMenu disabled={pending} projectType={projectType} />
           <span className="query-hint">⌘/Ctrl + Enter to submit</span>
           <button type="submit" className="btn-primary" disabled={pending || !question.trim()}>
             {pending ? (
