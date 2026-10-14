@@ -29,7 +29,13 @@ export function ChatPage() {
       question,
       enable_decomposition: settings.enableDecomposition,
       enable_crag_grading: settings.enableCragGrading,
-      enable_self_rag_critique: settings.enableSelfRagCritique,
+      // On a document project this gate is claim verification, which the doc
+      // service defaults ON and builds its answers from. Sending this UI's
+      // opt-in default (false) switched it off for every question, so - like
+      // the two below - it is sent there only when the user moved it.
+      ...(!isDocProject || settings.enableSelfRagCritique !== DEFAULT_SETTINGS.enableSelfRagCritique
+        ? { enable_self_rag_critique: settings.enableSelfRagCritique }
+        : {}),
       enable_out_of_scope_filter: settings.enableOutOfScopeFilter,
       enable_static_sql_validation: settings.enableStaticSqlValidation,
       // Sent only when the user has moved them off the default. These two are
