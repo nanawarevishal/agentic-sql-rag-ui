@@ -12,7 +12,6 @@ export interface PendingDelete {
 
 interface Options {
   onCommitted?: (id: string) => void;
-  onFailed?: (item: PendingDelete) => void;
 }
 
 // Holds a delete for a grace period so the UI can offer Undo, then fires the
@@ -23,6 +22,9 @@ interface Options {
 // window does lose the delete - that needs a real soft-delete endpoint.)
 export function usePendingDelete(commit: (id: string) => Promise<unknown>, options: Options = {}) {
   const [pending, setPending] = useState<PendingDelete | null>(null);
+  // A failed delete puts the item back in the list, so the caller shows a
+  // notice saying so; held here so every caller gets it the same way.
+  const [failed, setFailed] = useState<PendingDelete | null>(null);
 
   // The commit path runs from a timer and from unmount cleanup, long after
   // the render that scheduled it, so everything it touches is read through a
@@ -53,12 +55,13 @@ export function usePendingDelete(commit: (id: string) => Promise<unknown>, optio
     commitRef
       .current(item.id)
       .then(() => optionsRef.current.onCommitted?.(item.id))
-      .catch(() => optionsRef.current.onFailed?.(item));
+      .catch(() => setFailed(item));
   }, []);
 
   const schedule = useCallback(
     (item: PendingDelete) => {
       flush();
+      setFailed(null);
       pendingRef.current = item;
       setPending(item);
       timerRef.current = window.setTimeout(flush, UNDO_GRACE_MS);
@@ -75,5 +78,7 @@ export function usePendingDelete(commit: (id: string) => Promise<unknown>, optio
   // Cleanup only - `flush` is stable, so this runs on unmount and nowhere else.
   useEffect(() => flush, [flush]);
 
-  return { pending, schedule, undo };
+  const dismissFailed = useCallback(() => setFailed(null), []);
+
+  return { pending, schedule, undo, failed, dismissFailed };
 }

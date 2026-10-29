@@ -84,8 +84,15 @@ export function ChatPage() {
             </div>
           )}
 
+          {/* Retry is offered only while nothing is running: a second ask
+              mid-stream would interleave two turns' events. */}
           {turns.map((turn) => (
-            <ChatTurnView key={turn.id} turn={turn} projectType={activeProject?.type} />
+            <ChatTurnView
+              key={turn.id}
+              turn={turn}
+              projectType={activeProject?.type}
+              onRetry={pending ? undefined : () => handleSubmit(turn.question)}
+            />
           ))}
         </div>
 

@@ -56,7 +56,12 @@ function CitationItem({ source }: { source: Source }) {
         <>
           <p className={`citation-text ${expanded ? "is-expanded" : ""}`}>{source.text}</p>
           {source.text.length > 240 && (
-            <button type="button" className="link-button" onClick={() => setExpanded((v) => !v)}>
+            <button
+              type="button"
+              className="link-button"
+              aria-expanded={expanded}
+              onClick={() => setExpanded((v) => !v)}
+            >
               {expanded ? "Show less" : "Show more"}
             </button>
           )}

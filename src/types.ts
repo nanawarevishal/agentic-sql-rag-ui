@@ -110,7 +110,22 @@ export interface SubQuestionResult {
   source_confidence?: number | null;
   faithfulness?: number | null;
   weakly_grounded?: boolean;
+  // Document sub-results only. "service_unavailable" means a model provider
+  // was down, so the question was never really answered - asking again is
+  // the remedy, not rephrasing.
+  grading_verdict?: string | null;
+  // Excerpts that state different figures for the same thing, and how the
+  // document service settled it. `detail` already names both documents and
+  // both figures; `source_refs` number the service's context blocks, not the
+  // citation list, so they are not shown.
+  conflicts?: Conflict[];
   [key: string]: unknown;
+}
+
+export interface Conflict {
+  source_refs: string[];
+  resolution: "superseded" | "recency" | "unresolved";
+  detail: string;
 }
 
 // How a turn resolved, independent of final_answer's prose. "answered" =

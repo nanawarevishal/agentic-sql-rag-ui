@@ -9,6 +9,7 @@ interface Props {
   // Which agent produced this turn, so the trace panel can name its stages
   // in the right vocabulary (passages vs tables).
   projectType?: ProjectKind;
+  onRetry?: () => void;
 }
 
 function TraceToggleButton({ open, onClick }: { open: boolean; onClick: () => void }) {
@@ -27,7 +28,7 @@ function TraceToggleButton({ open, onClick }: { open: boolean; onClick: () => vo
   );
 }
 
-export function ChatTurnView({ turn, projectType }: Props) {
+export function ChatTurnView({ turn, projectType, onRetry }: Props) {
   const isDone = !turn.isStreaming && !turn.error;
   const hasTrace = turn.trace.length > 0;
   const [showTrace, setShowTrace] = useState(false);
@@ -52,9 +53,14 @@ export function ChatTurnView({ turn, projectType }: Props) {
       </div>
 
       {turn.error && (
-        <div className="error-banner">
+        <div className="error-banner" role="alert">
           <strong>Request failed</strong>
           <span>{turn.error}</span>
+          {onRetry && (
+            <button type="button" className="btn-secondary error-banner-retry" onClick={onRetry}>
+              Try again
+            </button>
+          )}
         </div>
       )}
 
@@ -82,6 +88,7 @@ export function ChatTurnView({ turn, projectType }: Props) {
                 resolution: turn.resolution,
                 trace: turn.trace,
               }}
+              onRetry={onRetry}
             />
           )}
         </div>

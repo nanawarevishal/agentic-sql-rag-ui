@@ -1,6 +1,6 @@
 import { useDeleteConversationMutation, useGetConversationsQuery, type Conversation } from "./conversationsApi";
 import { usePendingDelete } from "../../hooks/usePendingDelete";
-import { UndoToast } from "../../components/UndoToast";
+import { DeleteFailedToast, UndoToast } from "../../components/UndoToast";
 
 interface Props {
   activeConversationId: string | null;
@@ -24,10 +24,10 @@ export function ConversationSidebar({ activeConversationId, onSelect, onNewChat,
   // Deleting takes one click with no confirm dialog in the way; the undo
   // window is what makes that safe. onDeleted (which resets the open chat)
   // fires on commit, not on click, so an undo leaves the turn history alone.
-  const { pending, schedule, undo } = usePendingDelete((id) => deleteConversation(id).unwrap(), {
-    onCommitted: onDeleted,
-    onFailed: () => alert("Failed to delete conversation. Please try again."),
-  });
+  const { pending, schedule, undo, failed, dismissFailed } = usePendingDelete(
+    (id) => deleteConversation(id).unwrap(),
+    { onCommitted: onDeleted }
+  );
 
   const visible = conversations.filter((conversation) => conversation.id !== pending?.id);
 
@@ -56,6 +56,7 @@ export function ConversationSidebar({ activeConversationId, onSelect, onNewChat,
               type="button"
               className="conversation-sidebar-item-delete"
               title="Delete conversation"
+              aria-label={`Delete conversation "${conversation.title || "Untitled conversation"}"`}
               onClick={(e) => {
                 e.stopPropagation();
                 schedule({
@@ -64,7 +65,7 @@ export function ConversationSidebar({ activeConversationId, onSelect, onNewChat,
                 });
               }}
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16Z" />
               </svg>
             </button>
@@ -73,6 +74,7 @@ export function ConversationSidebar({ activeConversationId, onSelect, onNewChat,
       </div>
 
       {pending && <UndoToast message={`Deleted "${pending.label}"`} onUndo={undo} />}
+      {failed && <DeleteFailedToast label={failed.label} onDismiss={dismissFailed} />}
     </aside>
   );
 }

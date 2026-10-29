@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { QueryResponse, Resolution, SubQuestionResult, TraceEvent } from "../types";
+import type { Conflict, QueryResponse, Resolution, SubQuestionResult, TraceEvent } from "../types";
 import { describeRemedy, turnRestrictions } from "../lib/retrievalFilters";
 import { detectVisualization, detectMultiSubResultBar, combineSubResultRows } from "../lib/resultVisualization";
 import { ResultChart } from "./ResultChart";
@@ -18,6 +18,8 @@ interface Props {
   result: Omit<QueryResponse, "conversation_id" | "resolution" | "resolution_verdicts"> & {
     resolution?: Resolution | null;
   };
+  // Re-asks the same question. Absent where there is nothing to re-ask from.
+  onRetry?: () => void;
 }
 
 // The SQL behind each sub-question already lives in the trace panel above
@@ -191,7 +193,54 @@ function DeclinedScopeNote({
   );
 }
 
-export function AnswerView({ result }: Props) {
+// Unresolved is the one that matters: nothing in the documents says which
+// figure is right. The other two were settled by edition or date, and are
+// listed so the reader can see what was set aside and why.
+const CONFLICT_LABELS: Record<Conflict["resolution"], string> = {
+  unresolved: "Unresolved:",
+  superseded: "Superseded edition:",
+  recency: "Earlier revision:",
+};
+
+function ConflictNote({ subResults }: { subResults: SubQuestionResult[] }) {
+  // Sub-questions can retrieve the same pair of excerpts, so the same
+  // disagreement would otherwise be listed once per sub-question.
+  const conflicts = [
+    ...new Map(subResults.flatMap((r) => r.conflicts ?? []).map((c) => [c.detail, c])).values(),
+  ];
+  if (conflicts.length === 0) return null;
+  const unresolved = conflicts.some((c) => c.resolution === "unresolved");
+
+  return (
+    <div className={`conflict-note ${unresolved ? "is-unresolved" : ""}`} role="note">
+      <strong>{unresolved ? "The sources disagree" : "Other editions were set aside"}</strong>
+      <ul>
+        {conflicts.map((c) => (
+          <li key={c.detail}>
+            <span className="conflict-label">{CONFLICT_LABELS[c.resolution]}</span> {c.detail}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+// A provider outage reaches the user as a clarifying question, but there is
+// nothing to clarify: the same question will most likely work in a minute.
+function ServiceUnavailableNote({ subResults, onRetry }: { subResults: SubQuestionResult[]; onRetry?: () => void }) {
+  if (!onRetry || !subResults.some((r) => r.grading_verdict === "service_unavailable")) return null;
+
+  return (
+    <div className="grounding-warning" role="status">
+      <span>A model service was unavailable, so this question wasn't answered.</span>
+      <button type="button" className="btn-secondary" onClick={onRetry}>
+        Try again
+      </button>
+    </div>
+  );
+}
+
+export function AnswerView({ result, onRetry }: Props) {
   const hasAnswer = Boolean(result.final_answer);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -243,7 +292,9 @@ export function AnswerView({ result }: Props) {
           specific about what you're asking, or splitting it into smaller questions.
         </p>
       )}
+      <ServiceUnavailableNote subResults={result.sub_results} onRetry={onRetry} />
       <DeclinedScopeNote resolution={result.resolution} trace={result.trace} />
+      {hasAnswer && <ConflictNote subResults={result.sub_results} />}
       {hasAnswer && (
         <AnswerExplain
           whyExplanation={result.why_explanation}

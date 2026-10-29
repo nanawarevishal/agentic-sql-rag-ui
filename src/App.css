@@ -359,7 +359,7 @@
 
 .chat-user-label {
   display: block;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -379,7 +379,7 @@
   align-items: center;
   gap: 0.3rem;
   margin-left: auto;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.03em;
   text-transform: none;
@@ -411,7 +411,7 @@
 
 .chat-hero-eyebrow {
   display: inline-block;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -518,7 +518,7 @@
   border-radius: var(--radius-full);
   background: var(--accent);
   color: var(--on-accent);
-  font-size: 0.62rem;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
@@ -556,7 +556,7 @@
 }
 
 .mode-menu-panel-title {
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -605,7 +605,7 @@
 }
 
 .mode-menu-item-hint {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
 }
 
@@ -820,7 +820,7 @@
   align-items: center;
   gap: 0.3rem;
   margin-left: auto;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.03em;
   text-transform: none;
@@ -952,13 +952,13 @@
 }
 
 .trace-module-count {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
   margin-left: auto;
 }
 
 .trace-status-chip {
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -1012,7 +1012,7 @@
 
 .trace-keyword {
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--accent);
   background: var(--accent-soft);
@@ -1111,7 +1111,7 @@ pre {
 }
 
 .trace-verdict {
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -1161,7 +1161,7 @@ pre {
   align-items: center;
   gap: 0.35rem;
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--text-secondary);
   background: var(--bg-elevated);
   border: 1px solid var(--border);
@@ -1360,7 +1360,7 @@ pre {
 }
 
 .result-chart-toggle button {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-muted);
   background: none;
@@ -1587,7 +1587,7 @@ pre {
 }
 
 .result-line-axis-label {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
   white-space: nowrap;
 }
@@ -1609,7 +1609,7 @@ pre {
   align-items: center;
   gap: 0.3rem;
   margin-left: auto;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.03em;
   text-transform: none;
@@ -1799,7 +1799,7 @@ pre {
 }
 
 .ds-kind {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -1807,7 +1807,7 @@ pre {
 }
 
 .ds-status {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -1884,6 +1884,7 @@ pre {
 .ds-field textarea:focus {
   outline: none;
   border-color: var(--accent-border);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 /* ---------- admin usage dashboard ---------- */
@@ -1899,7 +1900,7 @@ pre {
 }
 
 .admin-usage-window button {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-muted);
   background: none;
@@ -1933,7 +1934,7 @@ pre {
 }
 
 .admin-usage-group-label {
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -1958,7 +1959,7 @@ pre {
 }
 
 .admin-usage-stat-label {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -2062,7 +2063,7 @@ pre {
   }
 
   .result-line-endlabel {
-    font-size: 0.72rem;
+    font-size: 0.75rem;
   }
 }
 
@@ -2128,7 +2129,7 @@ pre {
 }
 
 .conversation-sidebar-item-time {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
 }
 
@@ -2245,7 +2246,7 @@ pre {
   justify-content: center;
   background: var(--accent);
   color: var(--on-accent);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
@@ -2555,7 +2556,7 @@ pre {
   height: 1.3rem;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-full);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
@@ -2754,7 +2755,7 @@ pre {
 }
 
 .dropzone-hint {
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
 }
 
@@ -2838,7 +2839,7 @@ pre {
 
 .citation-list-title {
   margin: 0 0 0.65rem;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 650;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -2884,7 +2885,7 @@ pre {
   border-radius: var(--radius-full);
   background: var(--accent-soft);
   color: var(--accent);
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -2995,4 +2996,133 @@ pre {
 .citation-text.is-expanded {
   display: block;
   overflow: visible;
+}
+
+/* =====================================================================
+   Answer notes, delete confirm, project stats
+   ===================================================================== */
+
+.grounding-warning .btn-secondary,
+.error-banner-retry {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.error-banner-retry {
+  align-self: flex-start;
+  margin: 0.4rem 0 0;
+}
+
+/* Neutral when every disagreement was settled by edition or date; amber only
+   when nothing in the documents says which figure is right. */
+.conflict-note {
+  margin-top: 0.9rem;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.conflict-note.is-unresolved {
+  color: var(--warning);
+  background: var(--warning-soft);
+  border-color: color-mix(in srgb, var(--warning) 35%, transparent);
+}
+
+.conflict-note ul {
+  margin: 0.3rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.conflict-label {
+  font-weight: 600;
+}
+
+.undo-toast.is-error {
+  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+}
+
+/* The undo toast truncates a long label; this one has to be read in full. */
+.undo-toast.is-error .undo-toast-text {
+  white-space: normal;
+}
+
+.confirm-dialog {
+  width: min(28rem, calc(100vw - 2rem));
+  padding: 0;
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.confirm-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(3px);
+}
+
+.confirm-dialog .modal-actions {
+  margin-left: auto;
+}
+
+.confirm-dialog .modal-body p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+/* Outlined rather than filled: white on the dark theme's --danger misses
+   4.5:1, and the soft fill reads as destructive in both themes. */
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--danger);
+  background: var(--danger-soft);
+  border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.btn-danger:hover {
+  border-color: var(--danger);
+}
+
+.ds-stats {
+  margin-top: 0.6rem;
+}
+
+.ds-stats dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.ds-stats dl > div {
+  padding: 0.5rem 0.7rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.ds-stats dt {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.ds-stats dd {
+  margin: 0.15rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
 }

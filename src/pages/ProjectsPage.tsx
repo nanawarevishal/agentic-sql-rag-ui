@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { UndoToast } from "../components/UndoToast";
+import { ConfirmDialog } from "../components/ConfirmDialog";
+import { DeleteFailedToast, UndoToast } from "../components/UndoToast";
 import { usePendingDelete } from "../hooks/usePendingDelete";
 import { CreateProjectWizard } from "../features/projects/CreateProjectWizard";
 import {
@@ -9,6 +10,7 @@ import {
   useTriggerProjectIngestMutation,
   type Project,
 } from "../features/projects/projectsApi";
+import { statFigures } from "../lib/projectStats";
 
 // Formerly AdminPage ("Data sources"). Same page, generalized: it lists
 // projects of every type and creates them through the schema-driven wizard
@@ -17,7 +19,14 @@ import {
 function ProjectRow({ project, onDelete }: { project: Project; onDelete: () => void }) {
   const [triggerIngest, { isLoading: isIngesting }] = useTriggerProjectIngestMutation();
   const [showStats, setShowStats] = useState(false);
-  const { data: stats } = useGetProjectStatsQuery(project.id, { skip: !showStats });
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const {
+    data: stats,
+    isFetching: statsLoading,
+    isError: statsFailed,
+  } = useGetProjectStatsQuery(project.id, { skip: !showStats });
+  const figures = statFigures(stats?.stats ?? {});
+  const vectorsError = stats?.stats.namespaces_error;
 
   return (
     <div className="ds-item">
@@ -33,37 +42,82 @@ function ProjectRow({ project, onDelete }: { project: Project; onDelete: () => v
           {project.last_ingested_at &&
             ` · last indexed ${new Date(project.last_ingested_at).toLocaleString()}`}
         </p>
-        {showStats && <pre className="sql-block">{JSON.stringify(stats ?? {}, null, 2)}</pre>}
+        {showStats && (
+          <div className="ds-stats" id={`stats-${project.id}`}>
+            {statsFailed ? (
+              <p className="ds-error">Couldn't load stats.</p>
+            ) : figures.length > 0 ? (
+              <dl>
+                {figures.map((f) => (
+                  <div key={f.label}>
+                    <dt>{f.label}</dt>
+                    <dd>{f.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            ) : (
+              <p className="ds-meta">{statsLoading ? "Loading stats..." : "Nothing indexed yet."}</p>
+            )}
+            {typeof vectorsError === "string" && (
+              <p className="ds-meta">Vector counts unavailable: {vectorsError}</p>
+            )}
+          </div>
+        )}
       </div>
       <div className="ds-item-actions">
-        <button type="button" className="btn-secondary" onClick={() => setShowStats((v) => !v)}>
+        <button
+          type="button"
+          className="btn-secondary"
+          aria-expanded={showStats}
+          aria-controls={`stats-${project.id}`}
+          onClick={() => setShowStats((v) => !v)}
+        >
           {showStats ? "Hide stats" : "Stats"}
         </button>
         <button
           type="button"
           className="btn-secondary"
           disabled={isIngesting}
+          aria-busy={isIngesting}
           onClick={() => triggerIngest(project.id)}
         >
-          {isIngesting ? <span className="spinner" /> : "Re-index"}
+          {isIngesting ? (
+            <>
+              <span className="spinner" aria-hidden="true" />
+              Re-indexing
+            </>
+          ) : (
+            "Re-index"
+          )}
         </button>
         {!project.is_builtin && (
           <button
             type="button"
             className="btn-secondary ds-delete"
-            onClick={() => {
-              // Heavier than deleting a conversation - it takes the index
-              // (and, for a document project, the uploaded files) with it -
-              // so this keeps a confirm on top of the undo window rather
-              // than relying on the undo window alone.
-              const ok = confirm(
-                `Delete project "${project.name}"? Its index will be removed and the agent will no longer be able to query it. You'll have a few seconds to undo.`
-              );
-              if (ok) onDelete();
-            }}
+            onClick={() => setConfirmingDelete(true)}
           >
             Delete
           </button>
+        )}
+        {/* Heavier than deleting a conversation - it takes the index (and,
+            for a document project, the uploaded files) with it - so this
+            keeps a confirm on top of the undo window rather than relying on
+            the undo window alone. */}
+        {confirmingDelete && (
+          <ConfirmDialog
+            title={`Delete "${project.name}"?`}
+            confirmLabel="Delete project"
+            onCancel={() => setConfirmingDelete(false)}
+            onConfirm={() => {
+              setConfirmingDelete(false);
+              onDelete();
+            }}
+          >
+            <p>
+              Its index will be removed and the agent will no longer be able to query it. You'll have a
+              few seconds to undo.
+            </p>
+          </ConfirmDialog>
         )}
       </div>
     </div>
@@ -88,9 +142,9 @@ export function ProjectsPage() {
     pending: pendingDelete,
     schedule: scheduleDelete,
     undo: undoDelete,
-  } = usePendingDelete((id) => deleteProject(id).unwrap(), {
-    onFailed: (item) => alert(`Failed to delete "${item.label}". Please try again.`),
-  });
+    failed: failedDelete,
+    dismissFailed: dismissFailedDelete,
+  } = usePendingDelete((id) => deleteProject(id).unwrap());
   const visibleProjects = projects.filter((p) => p.id !== pendingDelete?.id);
 
   return (
@@ -140,6 +194,7 @@ export function ProjectsPage() {
       {pendingDelete && (
         <UndoToast message={`Deleted "${pendingDelete.label}"`} onUndo={undoDelete} />
       )}
+      {failedDelete && <DeleteFailedToast label={failedDelete.label} onDismiss={dismissFailedDelete} />}
     </div>
   );
 }

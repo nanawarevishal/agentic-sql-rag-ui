@@ -26,3 +26,18 @@ export function UndoToast({ message, onUndo }: Props) {
     </div>
   );
 }
+
+// Same spot as the undo toast, for when the delete it offered went out and
+// failed. No timer: the item is back in the list, and that should be read.
+export function DeleteFailedToast({ label, onDismiss }: { label: string; onDismiss: () => void }) {
+  return (
+    <div className="undo-toast is-error" role="alert">
+      <div className="undo-toast-row">
+        <span className="undo-toast-text">Couldn't delete "{label}". It's back in the list.</span>
+        <button type="button" className="undo-toast-action" onClick={onDismiss}>
+          Dismiss
+        </button>
+      </div>
+    </div>
+  );
+}
