@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { DeleteFailedToast, UndoToast } from "../components/UndoToast";
 import { usePendingDelete } from "../hooks/usePendingDelete";
@@ -65,6 +66,11 @@ function ProjectRow({ project, onDelete }: { project: Project; onDelete: () => v
         )}
       </div>
       <div className="ds-item-actions">
+        {project.type === "doc_rag" && (
+          <Link className="btn-secondary" to={`/projects/${project.id}`}>
+            Documents
+          </Link>
+        )}
         <button
           type="button"
           className="btn-secondary"

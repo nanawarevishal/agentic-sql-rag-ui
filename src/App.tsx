@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Navigate, NavLink, Route, Routes } from "react-router-dom";
 import { ChatPage } from "./pages/ChatPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
+import { ProjectDocumentsPage } from "./pages/ProjectDocumentsPage";
 import { AdminUsagePage } from "./pages/AdminUsagePage";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { LoginPage } from "./features/auth/LoginPage";
@@ -89,6 +90,7 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<ChatPage />} />
             <Route path="/projects" element={<ProjectsPage />} />
+            <Route path="/projects/:projectId" element={<ProjectDocumentsPage />} />
             <Route element={<AdminRoute />}>
               <Route path="/usage" element={<AdminUsagePage />} />
             </Route>

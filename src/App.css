@@ -3126,3 +3126,85 @@ pre {
   font-variant-numeric: tabular-nums;
   color: var(--text-primary);
 }
+
+/* Project documents page */
+.doc-back-link {
+  display: inline-block;
+  margin-bottom: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.doc-back-link:hover {
+  color: var(--text-primary);
+}
+
+.doc-back-link::before {
+  content: "\2190\00a0";
+}
+
+/* Wide by nature (eight columns); scrolls inside its card on a phone rather
+   than pushing the page sideways. */
+.doc-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.doc-table {
+  font-size: 0.82rem;
+}
+
+.doc-table td {
+  vertical-align: top;
+}
+
+/* Status sits next to the name so "superseded" is never scrolled out of
+   view; the two free-text columns wrap rather than widen the table. */
+.doc-table td:first-child,
+.doc-table td:nth-child(6) {
+  min-width: 12rem;
+  white-space: normal;
+}
+
+.doc-title {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.doc-filename {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  word-break: break-all;
+}
+
+.ds-status-superseded {
+  color: var(--text-muted);
+  background: var(--surface-hover);
+}
+
+.doc-add {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.doc-add > :first-child {
+  align-self: stretch;
+}
+
+a.btn-secondary {
+  text-decoration: none;
+}
+
+/* The header's actions don't fit beside the nav on a phone; the avatar
+   already identifies who is signed in. */
+@media (max-width: 480px) {
+  .user-menu-name {
+    display: none;
+  }
+}

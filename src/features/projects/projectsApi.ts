@@ -61,6 +61,31 @@ export interface ProjectStats {
   stats: Record<string, unknown>;
 }
 
+// One document in a document project, with the metadata the document
+// service extracted at ingest. Retrieval filters and conflict resolution act
+// on these fields, so this is where a wrong date or a missed supersession
+// becomes visible.
+export interface ProjectDocument {
+  id: string;
+  filename: string;
+  size_bytes: number;
+  status: ProjectStatus;
+  error_message: string | null;
+  page_count: number | null;
+  chunks: number;
+  title: string | null;
+  doc_type: string | null;
+  doc_number: string | null;
+  version: string | null;
+  effective_date: string | null;
+  department: string | null;
+  applies_to: string | null;
+  superseded: boolean;
+  supersedes_doc_number: string | null;
+  supersedes_revision: string | null;
+  uploaded_at: string | null;
+}
+
 export interface UploadResult {
   status: string;
   accepted: Array<{ filename: string; size_bytes: number }>;
@@ -97,6 +122,12 @@ const projectsApi = api.injectEndpoints({
     getProjectStats: builder.query<ProjectStats, string>({
       query: (id) => `/projects/${id}/stats`,
     }),
+    // Tagged with Projects so an upload or a re-index refetches it.
+    getProjectDocuments: builder.query<ProjectDocument[], string>({
+      query: (id) => `/projects/${id}/documents`,
+      transformResponse: (response: { documents: ProjectDocument[] }) => response.documents,
+      providesTags: ["Projects"],
+    }),
     uploadProjectDocuments: builder.mutation<UploadResult, { id: string; files: File[] }>({
       query: ({ id, files }) => {
         // FormData, not JSON - fetchBaseQuery leaves the Content-Type unset
@@ -117,5 +148,6 @@ export const {
   useDeleteProjectMutation,
   useTriggerProjectIngestMutation,
   useGetProjectStatsQuery,
+  useGetProjectDocumentsQuery,
   useUploadProjectDocumentsMutation,
 } = projectsApi;
